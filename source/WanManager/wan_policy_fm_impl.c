@@ -17,38 +17,6 @@
  * limitations under the License.
 */
 
-/**************************************************************************
-
-    module: wan_policy_fm_impl.c
-
-        For COSA Data Model Library Development
-
-    -------------------------------------------------------------------
-
-    description:
-
-        State machine to manage a wan controller
-
-    -------------------------------------------------------------------
-
-    environment:
-
-        Platform independent
-
-    -------------------------------------------------------------------
-
-    author:
-
-        COSA XML TOOL CODE GENERATOR 1.0
-
-    -------------------------------------------------------------------
-
-    revision:
-
-        13/02/2020    initial revision.
-
-**************************************************************************/
-
 /* ---- Include Files ---------------------------------------- */
 #include <stdio.h>
 #include <stdlib.h>

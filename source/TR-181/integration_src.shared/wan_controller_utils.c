@@ -17,38 +17,6 @@
  * limitations under the License.
 */
 
-/**************************************************************************
-
-    module: wan_controller_utils.c
-
-        For COSA Data Model Library Development
-
-    -------------------------------------------------------------------
-
-    description:
-
-        State machine to manage a Wan Controller
-
-    -------------------------------------------------------------------
-
-    environment:
-
-        Platform independent
-
-    -------------------------------------------------------------------
-
-    author:
-
-        COSA XML TOOL CODE GENERATOR 1.0
-
-    -------------------------------------------------------------------
-
-    revision:
-
-        13/02/2020    initial revision.
-
-**************************************************************************/
-
 /* ---- Include Files ---------------------------------------- */
 #include "dmsb_tr181_psm_definitions.h"
 #include "wan_controller_utils.h"

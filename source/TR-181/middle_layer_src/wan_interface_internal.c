@@ -17,40 +17,21 @@
  * limitations under the License.
 */
 
-/**************************************************************************
+/**********************************************************************
+   Copyright [2014] [Cisco Systems, Inc.]
 
-    module: wan_interface_internal.c
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
 
-        For COSA Data Model Library Development
+       http://www.apache.org/licenses/LICENSE-2.0
 
-    -------------------------------------------------------------------
-
-    description:
-
-        This file implementes back-end apis for the COSA Data Model Library
-
-        *  WanIfaceCreate
-        *  WanIfaceInitialize
-        *  WanIfaceRemove
-    -------------------------------------------------------------------
-
-    environment:
-
-        platform independent
-
-    -------------------------------------------------------------------
-
-    author:
-
-        COSA XML TOOL CODE GENERATOR 1.0
-
-    -------------------------------------------------------------------
-
-    revision:
-
-        20/12/2019    initial revision.
-
-**************************************************************************/
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+**********************************************************************/
 
 #include "plugin_main_apis.h"
 #include "wan_interface_dml_apis.h"
