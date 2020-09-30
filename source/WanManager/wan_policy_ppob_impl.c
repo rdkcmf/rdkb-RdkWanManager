@@ -245,7 +245,6 @@ static WcPpobPolicyState_t State_SelectedInterfaceDown(PWAN_CONTROLLER_PRIVATE_S
     pSelectedInterface = (pWanController->pInterface) + (pWanController->activeInterface);
 
     if(pWanController->WanEnable == TRUE &&
-       pSelectedInterface->CfgEnable == TRUE &&
        (pSelectedInterface->CfgPhyStatus == WAN_IFACE_PHY_STATUS_UP ||
        pSelectedInterface->CfgPhyStatus == WAN_IFACE_PHY_STATUS_INITIALIZING) &&
        pSelectedInterface->CfgLinkStatus == WAN_IFACE_LINKSTATUS_DOWN &&
@@ -266,10 +265,6 @@ static WcPpobPolicyState_t Transition_Start(PWAN_CONTROLLER_PRIVATE_SM_INFO pWan
     {
         return ANSC_STATUS_FAILURE;
     }
-
-#ifdef _HUB4_PRODUCT_REQ_
-        util_setWanLedState(OFF);
-#endif
 
     pInterface = (pWanController->pInterface);
 
@@ -293,10 +288,6 @@ static WcPpobPolicyState_t Transition_WanInterfaceSelected(PWAN_CONTROLLER_PRIVA
 {
     WanInterfaceData_t wanIf;
     PDML_WAN_IFACE_GLOBAL_CONFIG pSelectedInterface = NULL;
-
-#ifdef _HUB4_PRODUCT_REQ_
-    util_setWanLedState(FLASHING_AMBER);
-#endif
 
     pSelectedInterface = (pWanController->pInterface) + (pWanController->activeInterface);
 
@@ -325,9 +316,7 @@ static WcPpobPolicyState_t Transition_SelectedInterfaceUp(PWAN_CONTROLLER_PRIVAT
     the interface to begin configuring the WAN link */
     strncpy(wanIf.ifName, pSelectedInterface->CfgWanName, sizeof(wanIf.ifName));
     strncpy(wanIf.baseIfName, pSelectedInterface->CfgBaseifName, sizeof(wanIf.baseIfName));
-#ifdef _HUB4_PRODUCT_REQ_
-    util_setWanLedState(SOLID_AMBER);
-#endif
+
     WanManager_StartStateMachine(&wanIf);
 
     return SELECTED_INTERFACE_UP;
@@ -335,8 +324,6 @@ static WcPpobPolicyState_t Transition_SelectedInterfaceUp(PWAN_CONTROLLER_PRIVAT
 
 static WcPpobPolicyState_t Transition_SelectedInterfaceDown(PWAN_CONTROLLER_PRIVATE_SM_INFO pWanController)
 {
-#ifdef _HUB4_PRODUCT_REQ_
-    util_setWanLedState(OFF);
-#endif
+
     return SELECTED_INTERFACE_DOWN;
 }

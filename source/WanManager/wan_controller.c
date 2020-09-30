@@ -76,7 +76,6 @@ ANSC_STATUS WanController_Init_StateMachine(PANSC_HANDLE phContext)
     pWanController->uInterfaceCount = iTotalInterfaces;
     pWanController->WanEnable = TRUE;
     pWanController->activeInterface = -1;
-    pWanController->activeSecondaryInterface = -1;
 
     if(WanController_Start_StateMachine(wan_policy, pWanController) != ANSC_STATUS_SUCCESS) {
         CcspTraceInfo(("%s %d Error: WanController_Start_StateMachine failed \n", __FUNCTION__, __LINE__ ));

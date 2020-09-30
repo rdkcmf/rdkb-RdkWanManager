@@ -383,6 +383,13 @@ static void ProcessDhcp6cStateChanged(dhcpv6_data_t * dhcp6cInfoNew)
                     syscfg_set_string(SYSCFG_FIELD_IPV6_PREFIX_ADDRESS, dhcp6cInfoNew->pdIfAddress);
                     sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_TR_BRLAN0_DHCPV6_SERVER_ADDRESS, set_value, 0);
                 }
+ 
+                if (strcmp(dhcp6cInfoPrvs.sitePrefix, dhcp6cInfoNew->sitePrefix) != 0)
+                {
+                    CcspTraceInfo(("%s %d new prefix = %s, current prefix = %s \n", __FUNCTION__, __LINE__, dhcp6cInfoNew->sitePrefix, dhcp6cInfoPrvs.sitePrefix));
+                    strncat(prefix, "/64", 3);
+                    sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_IPV6_PREFIX, prefix, 0);
+                }
             }
         }
         else /* IFADDRCONF_REMOVE: prefix remove */
@@ -484,6 +491,7 @@ static void ProcessDhcp6cStateChanged(dhcpv6_data_t * dhcp6cInfoNew)
             {
                 CcspTraceError(("Life Time Setting Failed"));
             }
+            sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_RADVD_RESTART, NULL, 0);
         }
         // update current IPv6 Data
         pthread_mutex_lock(&gmWanDataMutex);
@@ -491,7 +499,6 @@ static void ProcessDhcp6cStateChanged(dhcpv6_data_t * dhcp6cInfoNew)
         pthread_mutex_unlock(&gmWanDataMutex);
 
         WanManager_UpdateWANInterface(WAN_CONNECTION_IPV6_UP, gWanData.ifName);
-        sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_RADVD_RESTART, NULL, 0);
     }
 } /* End of ProcessDhcp6cStateChanged() */
 

@@ -30,6 +30,5 @@
 ANSC_STATUS WanController_getWanPolicy(DML_WAN_POLICY *wan_policy);
 ANSC_STATUS WanController_updateWanInterfaceUpstreamFlag(PWAN_CONTROLLER_PRIVATE_SM_INFO pController, bool flag);
 ANSC_STATUS WanController_updateWanActiveLinkFlag(int instance, bool flag);
-ANSC_STATUS WanController_updateWanStatus(int instance, DML_WAN_IFACE_STATUS status);
 
 #endif /* WAN_CONTROLLER_UTILS_H */

@@ -284,10 +284,6 @@ static WcFmPolicyState_t Transition_Start(PWAN_CONTROLLER_PRIVATE_SM_INFO pWanCo
         return ANSC_STATUS_FAILURE;
     }
 
-#ifdef _HUB4_PRODUCT_REQ_
-        util_setWanLedState(OFF);
-#endif
-
     pInterface = (pWanController->pInterface);
 
     for( iLoopCount = 0; iLoopCount < pWanController->uInterfaceCount; iLoopCount++ )
@@ -312,17 +308,13 @@ static WcFmPolicyState_t Transition_WanInterfaceFixed(PWAN_CONTROLLER_PRIVATE_SM
     {
         return ANSC_STATUS_FAILURE;
     }
-#ifdef _HUB4_PRODUCT_REQ_
-    util_setWanLedState(FLASHING_AMBER);
-#endif
+
     return STATE_FIXED_WAN_INTERFACE_DOWN;
 }
 
 static WcFmPolicyState_t Transition_FixedInterfaceDown(PWAN_CONTROLLER_PRIVATE_SM_INFO pWanController)
 {
-#ifdef _HUB4_PRODUCT_REQ_
-    util_setWanLedState(OFF);
-#endif
+
     return STATE_FIXED_WAN_INTERFACE_DOWN;
 }
 
@@ -337,9 +329,7 @@ static WcFmPolicyState_t Transition_FixedInterfaceUp(PWAN_CONTROLLER_PRIVATE_SM_
     the interface to begin configuring the WAN link */
     strncpy(wanIf.ifName, pCurrentInterface->CfgWanName, sizeof(wanIf.ifName));
     strncpy(wanIf.baseIfName, pCurrentInterface->CfgBaseifName, sizeof(wanIf.baseIfName));
-#ifdef _HUB4_PRODUCT_REQ_
-    util_setWanLedState(SOLID_AMBER);
-#endif
+
     WanManager_StartStateMachine(&wanIf);
 
     return STATE_FIXED_WAN_INTERFACE_UP;
@@ -347,14 +337,11 @@ static WcFmPolicyState_t Transition_FixedInterfaceUp(PWAN_CONTROLLER_PRIVATE_SM_
 
 static WcFmPolicyState_t Transition_FixedInterfaceChanged(PWAN_CONTROLLER_PRIVATE_SM_INFO pWanController)
 {
-    /* Sets Wan.Status to DISABLED for the current active interface */
-    if(WanController_updateWanStatus(pWanController->activeInterface, WAN_IFACE_STATUS_DISABLED) != ANSC_STATUS_SUCCESS)
-    {
-        return ANSC_STATUS_FAILURE;
-    }
+    PDML_WAN_IFACE_GLOBAL_CONFIG pCurrentInterface = NULL;
+    pCurrentInterface = (pWanController->pInterface) + (pWanController->activeInterface);
 
-    /* Sets Wan.ActiveLink to FALSE for the current fixed interface */
-    if(WanController_updateWanActiveLinkFlag(pWanController->activeInterface, FALSE) != ANSC_STATUS_SUCCESS)
+    /* Sets Wan.Status to DISABLED for the current active interface */
+    if(DmlWanIfUpdateWanStatusForGivenIfName(pCurrentInterface->CfgBaseifName, WAN_IFACE_STATUS_DISABLED) != ANSC_STATUS_SUCCESS)
     {
         return ANSC_STATUS_FAILURE;
     }

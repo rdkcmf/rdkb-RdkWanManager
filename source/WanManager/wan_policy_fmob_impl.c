@@ -227,10 +227,6 @@ static WcFmobPolicyState_t Transition_Start(PWAN_CONTROLLER_PRIVATE_SM_INFO pWan
         return ANSC_STATUS_FAILURE;
     }
 
-#ifdef _HUB4_PRODUCT_REQ_
-    util_setWanLedState(OFF);
-#endif
-
     pInterface = (pWanController->pInterface);
     for( iLoopCount = 0; iLoopCount < pWanController->uInterfaceCount; iLoopCount++)
     {
@@ -263,10 +259,6 @@ static WcFmobPolicyState_t Transition_WanInterfaceFixed(PWAN_CONTROLLER_PRIVATE_
         return ANSC_STATUS_FAILURE;
     }
 
-#ifdef _HUB4_PRODUCT_REQ_
-    util_setWanLedState(FLASHING_AMBER);
-#endif
-
     CcspTraceInfo(("%s %d - State changed to STATE_FIXED_WAN_INTERFACE_DOWN \n", __FUNCTION__, __LINE__));
     return STATE_FIXED_WAN_INTERFACE_DOWN;
 }
@@ -274,9 +266,7 @@ static WcFmobPolicyState_t Transition_WanInterfaceFixed(PWAN_CONTROLLER_PRIVATE_
 static WcFmobPolicyState_t Transition_FixedInterfaceDown(PWAN_CONTROLLER_PRIVATE_SM_INFO pWanController)
 {
     CcspTraceInfo(("%s %d - State changed to STATE_FIXED_WAN_INTERFACE_DOWN \n", __FUNCTION__, __LINE__));
-#ifdef _HUB4_PRODUCT_REQ_
-    util_setWanLedState(OFF);
-#endif
+
     return STATE_FIXED_WAN_INTERFACE_DOWN;
 }
 
@@ -299,9 +289,7 @@ static WcFmobPolicyState_t Transition_FixedInterfaceUp(PWAN_CONTROLLER_PRIVATE_S
     /* Starts an instance of the WAN Interface State Machine on the interface to begin configuring the WAN link */
     strncpy(wanIf.ifName, pFixedInterface->CfgWanName, sizeof(wanIf.ifName));
     strncpy(wanIf.baseIfName, pFixedInterface->CfgBaseifName, sizeof(wanIf.baseIfName));
-#ifdef _HUB4_PRODUCT_REQ_
-    util_setWanLedState(SOLID_AMBER);
-#endif
+
     WanManager_StartStateMachine(&wanIf);
 
     CcspTraceInfo(("%s %d - State changed to STATE_FIXED_WAN_INTERFACE_UP \n", __FUNCTION__, __LINE__));

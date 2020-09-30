@@ -165,6 +165,15 @@ static WcPpPolicyState_t State_WanDown(PWAN_CONTROLLER_PRIVATE_SM_INFO pWanContr
         return ANSC_STATUS_FAILURE;
     }
 
+    /* Waiting to tear down all in active wan connection */
+    for( iLoopCount = 0; iLoopCount < pWanController->uInterfaceCount; iLoopCount++ )
+    {
+        if (pInterface[iLoopCount].CfgLinkStatus != WAN_IFACE_LINKSTATUS_DOWN)
+        {
+            return STATE_INTERFACE_DOWN;
+        }
+    }
+
     for( iLoopCount = 0; iLoopCount < pWanController->uInterfaceCount; iLoopCount++ )
     {
         if (pWanController->WanEnable == TRUE &&
@@ -220,7 +229,9 @@ static WcPpPolicyState_t State_PrimaryWanActive(PWAN_CONTROLLER_PRIVATE_SM_INFO 
     PDML_WAN_IFACE_GLOBAL_CONFIG pInterface = NULL;
     PDML_WAN_IFACE_GLOBAL_CONFIG pCurrentInterface = NULL;
     int newPrimaryInterface = -1;
+#ifdef ENABLE_STANDBY
     int newSecondaryInterface = -1;
+#endif
     WanInterfaceData_t wanIf;
     int iLoopCount = 0;
 
@@ -274,6 +285,10 @@ static WcPpPolicyState_t State_PrimaryWanActive(PWAN_CONTROLLER_PRIVATE_SM_INFO 
                     }
                 }
             }
+/* TODO: Disabling the below code to avoid conflict issues in interface state machines as we are using
+erouter0 name for both primary and secondary connections. Once this issue is fixed the below code can 
+be enabled */
+#ifdef ENABLE_STANDBY
             else if(pInterface[iLoopCount].CfgType == WAN_IFACE_TYPE_SECONDARY )
             {
                 if ((pInterface[iLoopCount].CfgPhyStatus == WAN_IFACE_PHY_STATUS_UP ||
@@ -291,6 +306,7 @@ static WcPpPolicyState_t State_PrimaryWanActive(PWAN_CONTROLLER_PRIVATE_SM_INFO 
                     }
                 }
             }
+#endif
         }
     }
 
@@ -298,13 +314,12 @@ static WcPpPolicyState_t State_PrimaryWanActive(PWAN_CONTROLLER_PRIVATE_SM_INFO 
     {
         return Transition_PrimaryInterfaceDeSelected(pWanController);
     }
-
+#ifdef ENABLE_STANDBY
     if(newSecondaryInterface != -1 )
     {
-        pWanController->activeSecondaryInterface = newSecondaryInterface;
         return Transition_SecondaryInterfaceUp(pWanController);
     }
-
+#endif
     return STATE_PRIMARY_WAN_ACTIVE;
 }
 
@@ -361,7 +376,7 @@ static WcPpPolicyState_t State_SecondaryWanActive(PWAN_CONTROLLER_PRIVATE_SM_INF
                    pInterface[iLoopCount].CfgLinkStatus == WAN_IFACE_LINKSTATUS_DOWN &&
                    pInterface[iLoopCount].CfgStatus == WAN_IFACE_STATUS_DISABLED )
                {
-                   if (newPrimaryInterface != -1 )
+                   if (newPrimaryInterface == -1 )
                    {
                        newPrimaryInterface = iLoopCount;
                    }
@@ -397,8 +412,12 @@ static WcPpPolicyState_t State_SecondaryWanActive(PWAN_CONTROLLER_PRIVATE_SM_INF
 
     if( newPrimaryInterface != -1 )
     {
+#ifdef ENABLE_STANDBY
         pWanController->activeInterface = newPrimaryInterface;
         return Transition_PrimaryInterfaceSelected(pWanController);
+#else
+        return Transition_SecondaryInterfaceDeSelected(pWanController);
+#endif
     }
 
     return STATE_SECONDARY_WAN_ACTIVE;
@@ -516,10 +535,6 @@ static WcPpPolicyState_t Transition_Start(PWAN_CONTROLLER_PRIVATE_SM_INFO pWanCo
         return ANSC_STATUS_FAILURE;
     }
 
-#ifdef _HUB4_PRODUCT_REQ_
-        util_setWanLedState(OFF);
-#endif
-
     pInterface = pWanController->pInterface;
     if(pInterface == NULL)
     {
@@ -547,7 +562,9 @@ static WcPpPolicyState_t Transition_PrimaryInterfaceSelected(PWAN_CONTROLLER_PRI
 {
     PDML_WAN_IFACE_GLOBAL_CONFIG pInterface = NULL;
     PDML_WAN_IFACE_GLOBAL_CONFIG pCurrentInterface = NULL;
+#ifdef ENABLE_STANDBY
     int WanStatusFlag = 0;
+#endif
     WanInterfaceData_t wanIf;
     int iLoopCount = 0;
 
@@ -598,11 +615,12 @@ static WcPpPolicyState_t Transition_PrimaryInterfaceSelected(PWAN_CONTROLLER_PRI
     the interface to begin configuring the WAN link */
     strncpy(wanIf.ifName, pCurrentInterface->CfgWanName, sizeof(wanIf.ifName));
     strncpy(wanIf.baseIfName, pCurrentInterface->CfgBaseifName, sizeof(wanIf.baseIfName));
-#ifdef _HUB4_PRODUCT_REQ_
-    util_setWanLedState(SOLID_AMBER);
-#endif
-    WanManager_StartStateMachine(&wanIf);
 
+    WanManager_StartStateMachine(&wanIf);
+/* TODO: Disabling the below code to avoid conflict issues in interface state machines as we are using
+erouter0 name for both primary and secondary connections. Once this issue is fixed the below code can
+be enabled. */
+#ifdef ENABLE_STANDBY
     /* If Wan.Status is DISABLED for all other Interfaces : Change state to PrimaryWANActive */
     for( iLoopCount = 0; iLoopCount < pWanController->uInterfaceCount; iLoopCount++ )
     {
@@ -615,38 +633,41 @@ static WcPpPolicyState_t Transition_PrimaryInterfaceSelected(PWAN_CONTROLLER_PRI
     }
     if(WanStatusFlag == 0)
     {
+#endif
         CcspTraceInfo(("%s %d - State changed to STATE_PRIMARY_WAN_ACTIVE \n", __FUNCTION__, __LINE__));
         return STATE_PRIMARY_WAN_ACTIVE;
+#ifdef ENABLE_STANDBY
     }
 
     CcspTraceInfo(("%s %d - State changed to STATE_PRIMARY_WAN_ACTIVE_SECONDARY_WAN_UP \n", __FUNCTION__, __LINE__));
     return STATE_PRIMARY_WAN_ACTIVE_SECONDARY_WAN_UP;
+#endif
 }
 
 static WcPpPolicyState_t Transition_PrimaryInterfaceDeSelected(PWAN_CONTROLLER_PRIVATE_SM_INFO pWanController)
 {
+    PDML_WAN_IFACE_GLOBAL_CONFIG pCurrentInterface = NULL;
+
     if(pWanController == NULL)
     {
         CcspTraceError(("%s %d pWanController object is NULL \n", __FUNCTION__, __LINE__));
         return ANSC_STATUS_FAILURE;
     }
 
-    /* Sets Wan.Status to DISABLED for the current active interface */
-    if(WanController_updateWanStatus((pWanController->activeInterface), WAN_IFACE_STATUS_DISABLED) != ANSC_STATUS_SUCCESS)
+    pCurrentInterface = pWanController->pInterface + pWanController->activeInterface;
+    if(pCurrentInterface == NULL)
     {
-        CcspTraceError(("%s %d WanController_updateWanStatus failed \n", __FUNCTION__, __LINE__));
+        CcspTraceError(("%s %d pCurrentInterface object is NULL \n", __FUNCTION__, __LINE__));
         return ANSC_STATUS_FAILURE;
     }
 
-    /* Sets Wan.ActiveLink to FALSE for the current active interface */
-    if(WanController_updateWanActiveLinkFlag((pWanController->activeInterface), FALSE) != ANSC_STATUS_SUCCESS)
+    /* Sets Wan.Status to DISABLED for the current active interface */
+    if(DmlWanIfUpdateWanStatusForGivenIfName(pCurrentInterface->CfgBaseifName, WAN_IFACE_STATUS_DISABLED) != ANSC_STATUS_SUCCESS)
     {
-        CcspTraceError(("%s %d WanController_updateWanActiveLinkFlag failed \n", __FUNCTION__, __LINE__));
+        CcspTraceError(("%s %d DmlWanIfUpdateWanStatusForGivenIfName failed \n", __FUNCTION__, __LINE__));
         return ANSC_STATUS_FAILURE;
     }
-#ifdef _HUB4_PRODUCT_REQ_
-    util_setWanLedState(OFF);
-#endif
+
     CcspTraceInfo(("%s %d - State changed to STATE_INTERFACE_DOWN \n", __FUNCTION__, __LINE__));
     return STATE_INTERFACE_DOWN;
 }
@@ -688,7 +709,7 @@ static WcPpPolicyState_t Transition_PrimaryInterfaceChanged(PWAN_CONTROLLER_PRIV
                pInterface[iLoopCount].CfgStatus == WAN_IFACE_STATUS_DISABLED &&
                pInterface[iLoopCount].CfgPriority < pCurrentInterface->CfgPriority )
             {
-                if (newPrimaryInterface != -1 )
+                if (newPrimaryInterface == -1 )
                 {
                     newPrimaryInterface = iLoopCount;
                 }
@@ -812,19 +833,24 @@ static WcPpPolicyState_t Transition_SecondaryInterfaceSelected(PWAN_CONTROLLER_P
 
 static WcPpPolicyState_t Transition_SecondaryInterfaceDeSelected(PWAN_CONTROLLER_PRIVATE_SM_INFO pWanController)
 {
+    PDML_WAN_IFACE_GLOBAL_CONFIG pCurrentInterface = NULL;
+
     if(pWanController == NULL)
     {
         CcspTraceError(("%s %d pWanController object is NULL \n", __FUNCTION__, __LINE__));
         return ANSC_STATUS_FAILURE;
     }
-    if(WanController_updateWanStatus((pWanController->activeInterface ), WAN_IFACE_STATUS_DISABLED) != ANSC_STATUS_SUCCESS)
+
+    pCurrentInterface = pWanController->pInterface + pWanController->activeInterface;
+    if(pCurrentInterface == NULL)
     {
-        CcspTraceError(("%s %d WanController_updateWanStatus failed \n", __FUNCTION__, __LINE__));
+        CcspTraceError(("%s %d pCurrentInterface object is NULL \n", __FUNCTION__, __LINE__));
         return ANSC_STATUS_FAILURE;
     }
-    if(WanController_updateWanActiveLinkFlag((pWanController->activeInterface), FALSE) != ANSC_STATUS_SUCCESS)
+
+    if(DmlWanIfUpdateWanStatusForGivenIfName(pCurrentInterface->CfgBaseifName, WAN_IFACE_STATUS_DISABLED) != ANSC_STATUS_SUCCESS)
     {
-        CcspTraceError(("%s %d WanController_updateWanActiveLinkFlag failed \n", __FUNCTION__, __LINE__));
+        CcspTraceError(("%s %d DmlWanIfUpdateWanStatusForGivenIfName failed \n", __FUNCTION__, __LINE__));
         return ANSC_STATUS_FAILURE;
     }
 
@@ -873,7 +899,6 @@ static WcPpPolicyState_t Transition_SecondaryInterfaceUp(PWAN_CONTROLLER_PRIVATE
 
 static WcPpPolicyState_t Transition_SecondaryInterfaceDown(PWAN_CONTROLLER_PRIVATE_SM_INFO pWanController)
 {
-    pWanController->activeSecondaryInterface = -1;
     CcspTraceInfo(("%s %d - State changed to STATE_PRIMARY_WAN_ACTIVE \n", __FUNCTION__, __LINE__));
     return STATE_PRIMARY_WAN_ACTIVE;
 }

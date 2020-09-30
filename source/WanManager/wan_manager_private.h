@@ -98,6 +98,7 @@
 #define SYSEVENT_IPV4_DNS_NUMBER "ipv4_%s_dns_number"
 #define SYSEVENT_IPV4_DNS_PRIMARY "ipv4_%s_dns_0"
 #define SYSEVENT_IPV4_DNS_SECONDARY "ipv4_%s_dns_1"
+#define SYSEVENT_IPV4_GW_NUMBER "ipv4_%s_gw_number"
 #define SYSEVENT_IPV4_GW_ADDRESS "ipv4_%s_gw_0"
 #define SYSEVENT_VENDOR_CLASS "vendor_class"
 #define SYSEVENT_IPV4_DEFAULT_ROUTER "default_router"
@@ -126,6 +127,7 @@
 #define SYSEVENT_FIELD_PREVIOUS_IPV6_PREFIXVLTIME "previous_ipv6_prefix_vldtime"
 #define SYSEVENT_FIELD_PREVIOUS_IPV6_PREFIXPLTIME "previous_ipv6_prefix_prdtime"
 #define SYSEVENT_RADVD_RESTART  "radvd_restart"
+#define SYSEVENT_GLOBAL_IPV6_PREFIX_SET "lan_prefix_set"
 
 #define SYSEVENT_FIELD_TR_BRLAN0_DHCPV6_SERVER_ADDRESS        "tr_brlan0_dhcpv6_server_v6addr"
 #define SYSEVENT_FIELD_TR_EROUTER_DHCPV6_CLIENT_PREFIX        "tr_erouter0_dhcpv6_client_v6pref"
@@ -295,16 +297,6 @@ uint32_t WanManager_StartDhcpv4Client(const char* intf, BOOL discover);
  * @return ANSC_STATUS_SUCCESS upon success else returned error code.
  ***************************************************************************/
 ANSC_STATUS WanManager_StopDhcpv4Client(BOOL sendReleaseAndExit);
-
-/***************************************************************************
- * @brief API used to restart Dhcpv6 client application.
- * @param ifName_info interface name
- * @param dynamicIpEnabled indicates dynamicip needs to be enable
- * @param pdEnabled indicates packket delegation enabled
- * @return ANSC_STATUS_SUCCESS upon success else returned error code.
- ***************************************************************************/
-uint32_t WanManager_RestartDhcp6c(const char *ifName_info, BOOL dynamicIpEnabled,
-                            BOOL pdEnabled, BOOL aftrName);
 
 /***************************************************************************
  * @brief API used to start IPoE health check application.

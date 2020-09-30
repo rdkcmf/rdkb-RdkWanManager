@@ -44,6 +44,7 @@
 #define PSM_ENABLE_STRING_FALSE  "FALSE"
 #define ETH_IF_STR "eth"
 #define DEFAULT_WAN_IF_NAME "erouter0"
+#define DATA_SKB_MARKING_LOCATION "/tmp/skb_marking.conf"
 
 //VLAN Agent
 #define VLAN_DBUS_PATH                     "/com/cisco/spvtg/ccsp/vlanmanager"
@@ -97,6 +98,10 @@ static int write_Wan_Interface_Validation_ParametersToPSM(ULONG instancenum, PDM
 static int DmlWanGetPSMRecordValue ( char *pPSMCmd, char *pOutputString );
 static int DmlWanSetPSMRecordValue ( char *pPSMEntry, char *pSetString );
 static int DmlWanDeletePSMRecordValue ( char *pPSMEntry );
+
+#ifdef _HUB4_PRODUCT_REQ_
+static void AddSkbMarkingToConfFile(UINT data_skb_mark);
+#endif
 
 PDML_WAN_IFACE_GLOBAL_CONFIG gpstWanGInfo = NULL;
 pthread_mutex_t gmWanGInfo_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -910,24 +915,47 @@ DmlWanIfUpdateLinkStatusForGivenIfName(char *ifname, DML_WAN_IFACE_LINKSTATUS st
 ANSC_STATUS
 DmlWanIfUpdateWanStatusForGivenIfName(char *ifname, DML_WAN_IFACE_STATUS status)
 {
-    ANSC_STATUS   retStatus;
-    INT           wanIndex = -1;
+    ANSC_STATUS             retStatus;
+    INT                     wanIndex     = -1;
+    PDATAMODEL_WAN_IFACE    pMyObject    = (PDATAMODEL_WAN_IFACE)g_pBEManager->hWanIface;
+    PDML_WAN_IFACE          p_Interface  = NULL;
+    INT                     wan_if_count = 0;
+    INT                     iLoopCount   = 0;
+
     if (ifname == NULL)
     {
         CcspTraceError(("%s Invalid data \n", __FUNCTION__));
         return ANSC_STATUS_FAILURE;
     }
-    retStatus = DmlWanIfGetIndexFromIfName(ifname, &wanIndex);
 
+    p_Interface = pMyObject->pWanIface;
+    if (p_Interface == NULL)
+    {
+        CcspTraceError(("%s p_Interface is NULL \n", __FUNCTION__ ));
+        return ANSC_STATUS_FAILURE;
+    }
+
+    wan_if_count = pMyObject->ulTotalNoofWanInterfaces;
+
+    retStatus = DmlWanIfGetIndexFromIfName(ifname, &wanIndex);
     if ( (ANSC_STATUS_FAILURE == retStatus ) || ( -1 == wanIndex ) )
     {
         CcspTraceError(("%s Failed to get index for %s\n", __FUNCTION__, ifname));
         return ANSC_STATUS_FAILURE;
     }
-    //Copy of the data
-    pthread_mutex_lock(&gmWanGInfo_mutex);
-    gpstWanGInfo[wanIndex].CfgStatus = status;
-    pthread_mutex_unlock(&gmWanGInfo_mutex);
+
+    for( iLoopCount = 0 ; iLoopCount < wan_if_count ; iLoopCount++ )
+    {
+        if (p_Interface[iLoopCount].ulInstanceNumber == (wanIndex + 1))
+        {
+            p_Interface[iLoopCount].CfgStatus = status;
+            /**
+            * Update global wan data object for the state machine.
+            */
+            DmlWanIfSetCfgStatus(iLoopCount, status);
+            break;
+        }
+    }
 
     return (ANSC_STATUS_SUCCESS);
 }
@@ -1297,31 +1325,6 @@ DmlWanIfSetCfgIpv4Status(char *ifname, DML_WAN_IFACE_IPV4_STATE status)
 }
 
 ANSC_STATUS
-DmlWanIfGetCfgIpv4Status(char *ifname, DML_WAN_IFACE_IPV4_STATE *status)
-{
-    ANSC_STATUS   retStatus;
-    INT           wanIndex = -1;
-    if (ifname == NULL)
-    {
-        CcspTraceError(("%s Invalid data \n", __FUNCTION__));
-        return ANSC_STATUS_FAILURE;
-    }
-    retStatus = DmlWanIfGetIndexFromIfName(ifname, &wanIndex);
-
-    if ( (ANSC_STATUS_FAILURE == retStatus ) || ( -1 == wanIndex ) )
-    {
-        CcspTraceError(("%s Failed to get index for %s\n", __FUNCTION__,ifname));
-        return ANSC_STATUS_FAILURE;
-    }
-
-    /* Set Wan Ipv4 Status */
-    pthread_mutex_lock (&gmWanGInfo_mutex);
-    *status = gpstWanGInfo[wanIndex].CfgIpv4Status;
-    pthread_mutex_unlock (&gmWanGInfo_mutex);
-    return ANSC_STATUS_SUCCESS;
-}
-
-ANSC_STATUS
 DmlWanIfSetCfgIpv6Status(char *ifname, DML_WAN_IFACE_IPV6_STATE status)
 {
     ANSC_STATUS   retStatus;
@@ -1342,31 +1345,6 @@ DmlWanIfSetCfgIpv6Status(char *ifname, DML_WAN_IFACE_IPV6_STATE status)
     /* Set Wan Ipv6 Status */
     pthread_mutex_lock (&gmWanGInfo_mutex);
     gpstWanGInfo[wanIndex].CfgIpv6Status = status;
-    pthread_mutex_unlock (&gmWanGInfo_mutex);
-    return ANSC_STATUS_SUCCESS;
-}
-
-ANSC_STATUS
-DmlWanIfGetCfgIpv6Status(char *ifname, DML_WAN_IFACE_IPV6_STATE *status)
-{
-    ANSC_STATUS retStatus;
-    INT wanIndex = -1;
-    if (ifname == NULL)
-    {
-        CcspTraceError(("%s Invalid data \n", __FUNCTION__));
-        return ANSC_STATUS_FAILURE;
-    }
-    retStatus = DmlWanIfGetIndexFromIfName(ifname, &wanIndex);
-
-    if ( (ANSC_STATUS_FAILURE == retStatus ) || ( -1 == wanIndex ) )
-    {
-        CcspTraceError(("%s Failed to get index for %s\n", __FUNCTION__,ifname));
-        return ANSC_STATUS_FAILURE;
-    }
-
-    /* Set Wan Ipv6 Status */
-    pthread_mutex_lock (&gmWanGInfo_mutex);
-    *status = gpstWanGInfo[wanIndex].CfgIpv6Status;
     pthread_mutex_unlock (&gmWanGInfo_mutex);
     return ANSC_STATUS_SUCCESS;
 }
@@ -1397,32 +1375,6 @@ DmlWanIfSetCfgMAPTStatus(char *ifname, DML_WAN_IFACE_MAPT_STATE status)
 }
 
 ANSC_STATUS
-DmlWanIfGetCfgMAPTStatus(char *ifname, DML_WAN_IFACE_MAPT_STATE *status)
-{
-    ANSC_STATUS   retStatus;
-    INT wanIndex = -1;
-    if (ifname == NULL)
-    {
-        CcspTraceError(("%s Invalid data \n", __FUNCTION__));
-        return ANSC_STATUS_FAILURE;
-    }
-
-    retStatus = DmlWanIfGetIndexFromIfName(ifname, &wanIndex);
-
-    if ( (ANSC_STATUS_FAILURE == retStatus ) || ( -1 == wanIndex ) )
-    {
-        CcspTraceError(("%s Failed to get index for %s\n", __FUNCTION__,ifname));
-        return ANSC_STATUS_FAILURE;
-    }
-
-    /* Get MAPT Status */
-    pthread_mutex_lock (&gmWanGInfo_mutex);
-    *status = gpstWanGInfo[wanIndex].CfgMAPTStatus;
-    pthread_mutex_unlock (&gmWanGInfo_mutex);
-    return ANSC_STATUS_SUCCESS;
-}
-
-ANSC_STATUS
 DmlWanIfSetCfgDSLiteStatus(char *ifname, DML_WAN_IFACE_DSLITE_STATE status)
 {
     ANSC_STATUS   retStatus;
@@ -1444,32 +1396,6 @@ DmlWanIfSetCfgDSLiteStatus(char *ifname, DML_WAN_IFACE_DSLITE_STATE status)
     /* Set DSLite Status */
     pthread_mutex_lock (&gmWanGInfo_mutex);
     gpstWanGInfo[wanIndex].CfgDSLiteStatus = status;
-    pthread_mutex_unlock (&gmWanGInfo_mutex);
-    return ANSC_STATUS_SUCCESS;
-}
-
-ANSC_STATUS
-DmlWanIfGetCfgDSLiteStatus(char *ifname, DML_WAN_IFACE_DSLITE_STATE *status)
-{
-    ANSC_STATUS   retStatus;
-    INT wanIndex = -1;
-    if (ifname == NULL)
-    {
-        CcspTraceError(("%s Invalid data \n", __FUNCTION__));
-        return ANSC_STATUS_FAILURE;
-    }
-
-    retStatus = DmlWanIfGetIndexFromIfName(ifname, &wanIndex);
-
-    if ( (ANSC_STATUS_FAILURE == retStatus ) || ( -1 == wanIndex ) )
-    {
-        CcspTraceError(("%s Failed to get index for %s\n", __FUNCTION__,ifname));
-        return ANSC_STATUS_FAILURE;
-    }
-
-    /* Get DSLite Status */
-    pthread_mutex_lock (&gmWanGInfo_mutex);
-    *status = gpstWanGInfo[wanIndex].CfgDSLiteStatus;
     pthread_mutex_unlock (&gmWanGInfo_mutex);
     return ANSC_STATUS_SUCCESS;
 }
@@ -1558,17 +1484,25 @@ DmlWanIfSetIPState
                 case WAN_IFACE_IPV4_STATE:
                 {
                     p_Interface[iLoopCount].Ipv4State = ipState;
+                    DmlWanIfSetCfgIpv4Status(p_Interface[iLoopCount].Name, ipState);
                     break;
                 }
                 case WAN_IFACE_IPV6_STATE:
                 {
                     p_Interface[iLoopCount].Ipv6State = ipState;
+                    DmlWanIfSetCfgIpv6Status(p_Interface[iLoopCount].Name, ipState);
                     break;
                 }
                 case WAN_IFACE_MAPT_STATE:
                 {
                     p_Interface[iLoopCount].MaptState = ipState;
+                    DmlWanIfSetCfgMAPTStatus(p_Interface[iLoopCount].Name, ipState);
                     break;
+                }
+                case WAN_IFACE_DSLITE_STATE:
+                {
+                    p_Interface[iLoopCount].DSLiteState = ipState;
+                    DmlWanIfSetCfgDSLiteStatus(p_Interface[iLoopCount].Name, ipState);
                 }
                 default:
                     break;
@@ -2143,6 +2077,13 @@ DmlWanIfMarkingInit
                        }
 
                        CcspTraceInfo(("%s - Name[%s] Data[%s,%u,%u,%d]\n", __FUNCTION__, acTmpMarkingData, p_Marking->Alias, p_Marking->SKBPort, p_Marking->SKBMark, p_Marking->EthernetPriorityMark));
+#ifdef _HUB4_PRODUCT_REQ_
+                       /* Adding skb mark to config file if alis is 'DATA', so that udhcpc could use it to mark dhcp packets */
+                       if(0 == strncmp(p_Marking->Alias, "DATA", 4))
+                       {
+			    AddSkbMarkingToConfFile(p_Marking->SKBMark);
+                       }
+#endif
                    }
                }  
                
@@ -2153,6 +2094,22 @@ DmlWanIfMarkingInit
 
     return ANSC_STATUS_SUCCESS;
 }
+
+#ifdef _HUB4_PRODUCT_REQ_
+static void AddSkbMarkingToConfFile(UINT data_skb_mark)
+{
+   FILE * fp = fopen(DATA_SKB_MARKING_LOCATION, "w+");
+   if (!fp)
+   {
+      AnscTraceError(("%s Error writing skb mark\n", __FUNCTION__));
+   }
+   else
+   {
+      fprintf(fp, "data_skb_marking %d\n",data_skb_mark);
+      fclose(fp);
+   }
+}
+#endif
 
 /* * SListPushMarkingEntryByInsNum() */
 ANSC_STATUS

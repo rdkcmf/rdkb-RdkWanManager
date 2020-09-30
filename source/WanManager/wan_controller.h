@@ -46,7 +46,6 @@ _WAN_CONTROLLER_PRIVATE_SM_INFO
     UINT uInterfaceCount;
     PDML_WAN_IFACE_GLOBAL_CONFIG pInterface;
     INT activeInterface;
-    INT activeSecondaryInterface;
 }WAN_CONTROLLER_PRIVATE_SM_INFO, *PWAN_CONTROLLER_PRIVATE_SM_INFO;
 
 ANSC_STATUS WanController_Init_StateMachine(PANSC_HANDLE phContext);

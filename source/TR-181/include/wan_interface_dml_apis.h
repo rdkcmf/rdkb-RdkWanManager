@@ -109,7 +109,8 @@ typedef enum _DML_WAN_IFACE_IP_STATE_TYPE
 {
     WAN_IFACE_IPV4_STATE = 0,
     WAN_IFACE_IPV6_STATE,
-    WAN_IFACE_MAPT_STATE
+    WAN_IFACE_MAPT_STATE,
+    WAN_IFACE_DSLITE_STATE
 } DML_WAN_IFACE_IP_STATE_TYPE;
 
 /** Enum IP state. UP/DOWN */
@@ -167,40 +168,41 @@ DATAMODEL_MARKING,  *PDATAMODEL_MARKING;
 typedef  struct
 _DML_WAN_INTERFACE
 {
-    ULONG                             ulInstanceNumber;
-    CHAR                              Name[64];
-    CHAR                              DisplayName[64];
-    CHAR                              PhyPath[64];
+    ULONG                        ulInstanceNumber;
+    CHAR                         Name[64];
+    CHAR                         DisplayName[64];
+    CHAR                         PhyPath[64];
     DML_WAN_IFACE_PHY_STATUS     PhyStatus;
-    BOOL                              CfgEnable;
-    CHAR                              CfgName[64];
-    BOOL                              CfgRefresh;
-    BOOL                              CfgActiveLink;
-    UINT                              CfgSelectionTimeout;
-    INT                               CfgPriority;
+    BOOL                         CfgEnable;
+    CHAR                         CfgName[64];
+    BOOL                         CfgRefresh;
+    BOOL                         CfgActiveLink;
+    UINT                         CfgSelectionTimeout;
+    INT                          CfgPriority;
     DML_WAN_IFACE_TYPE           CfgType;
     DML_WAN_IFACE_STATUS         CfgStatus;
     DML_WAN_IFACE_LINKSTATUS     CfgLinkStatus;
-    BOOL                              DynTriggerEnable;
-    ULONG                             DynTriggerDelay;
+    BOOL                         DynTriggerEnable;
+    ULONG                        DynTriggerDelay;
     DML_WAN_IFACE_IPV4_STATE     Ipv4State;
     DML_WAN_IFACE_IPV6_STATE     Ipv6State;
-    CHAR                              IpPath[64];
     DML_WAN_IFACE_MAPT_STATE     MaptState;
-    BOOL CfgEnablePPP;
-    BOOL CfgEnableMAPT;
-    BOOL CfgEnableDSLite;
-    BOOL CfgEnableIPoE;
-    BOOL CfgValidationDiscoverOffer;
-    BOOL CfgValidationSolicitAdvertise;
-    BOOL CfgValidationRsRa;
-    BOOL CfgValidationPadiPado;
-    CHAR                              MaptPath[64];
-    DML_WAN_IFACE_DSLITE_STATE DsliteState;
-    CHAR DslitePath[64];
-    DATAMODEL_MARKING            stDataModelMarking;   
+    DML_WAN_IFACE_DSLITE_STATE   DSLiteState;
+    CHAR                         IpPath[64];
+    BOOL                         CfgEnablePPP;
+    BOOL                         CfgEnableMAPT;
+    BOOL                         CfgEnableDSLite;
+    BOOL                         CfgEnableIPoE;
+    BOOL                         CfgValidationDiscoverOffer;
+    BOOL                         CfgValidationSolicitAdvertise;
+    BOOL                         CfgValidationRsRa;
+    BOOL                         CfgValidationPadiPado;
+    CHAR                         MaptPath[64];
+    DML_WAN_IFACE_DSLITE_STATE   DsliteState;
+    CHAR                         DslitePath[64];
+    DATAMODEL_MARKING            stDataModelMarking;
 }
-DML_WAN_IFACE, *PDML_WAN_IFACE;              
+DML_WAN_IFACE, *PDML_WAN_IFACE;
 
 /**
  * Structure to hold global data used for wanmanager state machine.
@@ -426,22 +428,16 @@ DmlWanIfGetCfgPhyPath
         CHAR *path
     );
 
+INT
+DmlWanIfCheckDataModelInitialised();
+
 ANSC_STATUS 
 DmlWanIfSetCfgIpv4Status
     (
         char *ifname, 
         DML_WAN_IFACE_IPV4_STATE status
     );
-	
-INT
-DmlWanIfCheckDataModelInitialised();
 
-ANSC_STATUS
-DmlWanIfGetCfgIpv4Status
-    (
-        char *ifname, 
-        DML_WAN_IFACE_IPV4_STATE *status
-    );
 
 ANSC_STATUS 
 DmlWanIfSetCfgIpv6Status
@@ -450,12 +446,6 @@ DmlWanIfSetCfgIpv6Status
         DML_WAN_IFACE_IPV6_STATE status
     );
 
-ANSC_STATUS 
-DmlWanIfGetCfgIpv6Status
-    (
-        char *ifname, 
-        DML_WAN_IFACE_IPV6_STATE *status
-    );
 
 ANSC_STATUS 
 DmlWanIfSetCfgMAPTStatus
@@ -464,12 +454,6 @@ DmlWanIfSetCfgMAPTStatus
         DML_WAN_IFACE_MAPT_STATE status
     );
 
-ANSC_STATUS 
-DmlWanIfGetCfgMAPTStatus
-    (
-        char *ifname, 
-        DML_WAN_IFACE_MAPT_STATE *status
-    );
 
 ANSC_STATUS 
 DmlWanIfSetCfgDSLiteStatus
@@ -478,12 +462,6 @@ DmlWanIfSetCfgDSLiteStatus
         DML_WAN_IFACE_DSLITE_STATE status
     );
 
-ANSC_STATUS 
-DmlWanIfGetCfgDSLiteStatus
-    (
-        char *ifname, 
-        DML_WAN_IFACE_DSLITE_STATE *status
-    );
 
 ANSC_STATUS
 DmlWanIfGetCopyOfGlobalData

@@ -128,6 +128,9 @@ ANSC_STATUS ipv4Info_set(const dhcpv4_data_t *dhcp4Info, const char *wanIfName)
     //same as SYSEVENT_IPV4_SUBNET. But this is required in other components
     sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_IPV4_WAN_SUBNET, dhcp4Info->mask, 0);
 
+    snprintf(name, sizeof(name), SYSEVENT_IPV4_GW_NUMBER, wanIfName);
+    sysevent_set(sysevent_fd, sysevent_token, name, "1", 0);
+
     snprintf(name, sizeof(name), SYSEVENT_IPV4_GW_ADDRESS, wanIfName);
     sysevent_set(sysevent_fd, sysevent_token, name, dhcp4Info->gateway, 0);
     sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_IPV4_DEFAULT_ROUTER, dhcp4Info->gateway, 0);

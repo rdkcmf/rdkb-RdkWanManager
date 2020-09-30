@@ -19,6 +19,7 @@
 
 #include <unistd.h>
 #include <pthread.h>
+#include <ifaddrs.h>
 #include <wan_manager.h>
 #include <wan_manager_private.h>
 #include "platform_hal.h"
@@ -132,6 +133,32 @@ static int wan_setUpMapt(const char *ifName);
  **************************************************************************************/
 static int wan_tearDownMapt(const char *ifName);
 #endif //FEATURE_MAPT
+
+/*************************************************************************************
+ * @brief Check IPv6 address assigned to interface or not.
+ * This API internally checks ipv6 prefix being set, received valid gateway and 
+ * lan ipv6 address ready to use.
+ * @return RETURN_OK on success else RETURN_ERR
+ *************************************************************************************/
+static int checkIpv6AddressAssignedToBridge();
+
+/*************************************************************************************
+ * @brief Check IPv6 address is ready to use or not
+ * @return RETURN_OK on success else RETURN_ERR
+ *************************************************************************************/
+static int checkIpv6LanAddressIsReadyToUse();
+
+/*************************************************************************************
+ * @brief Check CPE received a valid IPv6 gw address
+ * @return RETURN_OK on success else RETURN_ERR
+ ************************************************************************************/
+static int validate_v6_gateway_address(void);
+
+/************************************************************************************
+ * @brief Set v6 prefixe required for lan configuration
+ * @return RETURN_OK on success else RETURN_ERR
+ ************************************************************************************/
+static int setUpLanPrefixIPv6(WanData_t* wanData);
 
 /*Statemachine Thread*/
 static void* WanManagerStateMachineThread( void *arg );
@@ -349,7 +376,6 @@ static eWanState_t wan_state_configuring_wan(WanInterfaceData_t *wanIf)
     WanManager_GetCopyofGlobalWanData(wanIf->ifName, &wan_enable, &wanData);
 
     if (wan_enable == FALSE ||
-        stGlobalInfo.CfgEnable ==  FALSE ||
         stGlobalInfo.CfgStatus == WAN_IFACE_STATUS_DISABLED ||
         stGlobalInfo.CfgPhyStatus ==  WAN_IFACE_PHY_STATUS_DOWN ||
         stGlobalInfo.CfgLinkStatus ==  WAN_IFACE_LINKSTATUS_DOWN )
@@ -384,7 +410,6 @@ static eWanState_t wan_state_validating_wan(WanInterfaceData_t *wanIf)
     WanManager_GetCopyofGlobalWanData(wanIf->ifName, &wan_enable, &wanData);
 
     if (wan_enable == FALSE ||
-        stGlobalInfo.CfgEnable ==  FALSE ||
         stGlobalInfo.CfgStatus == WAN_IFACE_STATUS_DISABLED ||
         stGlobalInfo.CfgPhyStatus ==  WAN_IFACE_PHY_STATUS_DOWN ||
         stGlobalInfo.CfgLinkStatus ==  WAN_IFACE_LINKSTATUS_DOWN )
@@ -423,7 +448,6 @@ static eWanState_t wan_state_obtaining_ip_addresses(WanInterfaceData_t *wanIf)
     WanManager_GetCopyofGlobalWanData(wanIf->ifName, &wan_enable, &wanData);
 
     if (wan_enable == FALSE ||
-        stGlobalInfo.CfgEnable == FALSE ||
         stGlobalInfo.CfgStatus == WAN_IFACE_STATUS_DISABLED ||
         stGlobalInfo.CfgPhyStatus == WAN_IFACE_PHY_STATUS_DOWN ||
         stGlobalInfo.CfgLinkStatus == WAN_IFACE_LINKSTATUS_DOWN )
@@ -444,7 +468,23 @@ static eWanState_t wan_state_obtaining_ip_addresses(WanInterfaceData_t *wanIf)
 
     if (wanData.isIPv6Up == TRUE)
     {
-        return wan_transition_ipv6_up(wanIf);
+        if(wanData.isIPv6ConfigChanged == TRUE)
+        {
+            /* Set sysevents to trigger P&M */
+            if (setUpLanPrefixIPv6(&wanData) != RETURN_OK)
+            {
+                CcspTraceError((" %s %d - Failed to configure IPv6 prefix \n", __FUNCTION__, __LINE__));
+            }
+
+            /* Reset isIPv6ConfigChanged  */
+            WanManager_UpdateGlobalWanData(IPV6_CONFIG_CHANGED, FALSE);
+            return WAN_STATE_IPV4_LEASED;
+        }
+
+        if (checkIpv6AddressAssignedToBridge() == RETURN_OK)
+        {
+            return wan_transition_ipv6_up(wanIf);
+        }
     }
 
     return WAN_STATE_OBTAINING_IP_ADDRESSES;
@@ -481,7 +521,6 @@ static eWanState_t wan_state_ipv4_leased(WanInterfaceData_t *wanIf)
     if( wan_enable == FALSE ||
         wanData.isIPv4Up == FALSE ||
         wanData.isIPv4ConfigChanged == TRUE ||
-        stGlobalInfo.CfgEnable == FALSE ||
         stGlobalInfo.CfgPhyStatus == WAN_IFACE_PHY_STATUS_DOWN ||
         stGlobalInfo.CfgStatus == WAN_IFACE_STATUS_DISABLED ||
         stGlobalInfo.CfgLinkStatus == WAN_IFACE_LINKSTATUS_DOWN )
@@ -490,7 +529,10 @@ static eWanState_t wan_state_ipv4_leased(WanInterfaceData_t *wanIf)
     }
     else if ((wanData.isIPv6Up == TRUE))
     {
-        return wan_transition_ipv6_up(wanIf);
+        if (checkIpv6AddressAssignedToBridge() == RETURN_OK)
+        {
+            return wan_transition_ipv6_up(wanIf);
+        }
     }
 
     return WAN_STATE_IPV4_LEASED;
@@ -527,7 +569,6 @@ static eWanState_t wan_state_ipv6_leased(WanInterfaceData_t *wanIf)
     if( wanData.isIPv6Up == FALSE ||
         wanData.isIPv6ConfigChanged == TRUE ||
         wan_enable == FALSE ||
-        stGlobalInfo.CfgEnable == FALSE ||
         stGlobalInfo.CfgPhyStatus == WAN_IFACE_PHY_STATUS_DOWN ||
         stGlobalInfo.CfgStatus == WAN_IFACE_STATUS_DISABLED ||
         stGlobalInfo.CfgLinkStatus == WAN_IFACE_LINKSTATUS_DOWN )
@@ -576,7 +617,6 @@ static eWanState_t wan_state_dual_stack_active(WanInterfaceData_t *wanIf)
     }*/
 
     if( wan_enable == FALSE ||
-        stGlobalInfo.CfgEnable == FALSE ||
         stGlobalInfo.CfgPhyStatus == WAN_IFACE_PHY_STATUS_DOWN ||
         stGlobalInfo.CfgStatus == WAN_IFACE_STATUS_DISABLED ||
         stGlobalInfo.CfgLinkStatus == WAN_IFACE_LINKSTATUS_DOWN ||
@@ -626,7 +666,6 @@ static eWanState_t wan_state_ipv4_over_ipv6_active(WanInterfaceData_t *wanIf)
     if( wanData.isIPv6Up == FALSE ||
         wanData.isIPv6ConfigChanged == TRUE ||
         wan_enable == FALSE ||
-        stGlobalInfo.CfgEnable == FALSE ||
         stGlobalInfo.CfgActiveLink != TRUE ||
         stGlobalInfo.CfgPhyStatus == WAN_IFACE_PHY_STATUS_DOWN ||
         stGlobalInfo.CfgStatus == WAN_IFACE_STATUS_DISABLED ||
@@ -671,8 +710,7 @@ static eWanState_t wan_state_refreshing_wan(WanInterfaceData_t *wanIf)
     if( stGlobalInfo.CfgPhyStatus == WAN_IFACE_PHY_STATUS_DOWN ||
         stGlobalInfo.CfgStatus == WAN_IFACE_STATUS_DISABLED ||
         stGlobalInfo.CfgLinkStatus == WAN_IFACE_LINKSTATUS_DOWN ||
-        wan_enable == FALSE ||
-        stGlobalInfo.CfgEnable == FALSE )
+        wan_enable == FALSE )
     {
         return wan_transition_physical_interface_down(wanIf);
     }
@@ -726,15 +764,30 @@ static eWanState_t wan_transition_start(WanInterfaceData_t *wanIf)
 
     WanManagerInitInterfaceData(&gWanData, wanIf->ifName);
 
-    DmlWanIfSetCfgIpv4Status(stGlobalInfo.CfgBaseifName, WAN_IFACE_IPV4_STATE_DOWN);
-    DmlWanIfSetCfgIpv6Status(stGlobalInfo.CfgBaseifName, WAN_IFACE_IPV6_STATE_DOWN);
-    DmlWanIfSetCfgMAPTStatus(stGlobalInfo.CfgBaseifName, WAN_IFACE_MAPT_STATE_DOWN);
-    DmlWanIfSetCfgDSLiteStatus(stGlobalInfo.CfgBaseifName, WAN_IFACE_DSLITE_STATE_DOWN);
+    DmlWanIfSetIPState(stGlobalInfo.CfgWanName, WAN_IFACE_IPV4_STATE, WAN_IFACE_IP_STATE_DOWN);
+    DmlWanIfSetIPState(stGlobalInfo.CfgWanName, WAN_IFACE_IPV6_STATE, WAN_IFACE_IP_STATE_DOWN);
+    DmlWanIfSetIPState(stGlobalInfo.CfgWanName, WAN_IFACE_MAPT_STATE, WAN_IFACE_IP_STATE_DOWN);
+    DmlWanIfSetIPState(stGlobalInfo.CfgWanName, WAN_IFACE_DSLITE_STATE, WAN_IFACE_IP_STATE_DOWN);
 
     DmlWanIfUpdateLinkStatusForGivenIfName(stGlobalInfo.CfgBaseifName, WAN_IFACE_LINKSTATUS_CONFIGURING);
     DmlWanIfUpdateWanStatusForGivenIfName(stGlobalInfo.CfgBaseifName, WAN_IFACE_STATUS_INITIALISING);
 
     WanManager_updateWanInterfaceUpstreamFlag(stGlobalInfo.CfgPhyPath, TRUE);
+
+#ifdef _HUB4_PRODUCT_REQ_
+    if (stGlobalInfo.CfgActiveLink == TRUE) 
+    {
+        const char if_dsl_name[] = "dsl";
+        if (strncmp(stGlobalInfo.CfgBaseifName, if_dsl_name, strlen(if_dsl_name)) == 0)
+        {
+            wanmgr_setLedState(FLASHING_AMBER);
+        }
+        else    
+        {
+            wanmgr_setLedState(SOLID_AMBER);
+        }        
+    }
+#endif
 
     /* TODO: Need to handle crash recovery */
     return WAN_STATE_CONFIGURING_WAN;
@@ -808,6 +861,13 @@ static eWanState_t wan_transition_wan_up(WanInterfaceData_t *wanIf)
     The results of each validation process will be stored internally
     to the state machine (i.e. not expressed in the data model */
 
+#ifdef _HUB4_PRODUCT_REQ_
+    if (stGlobalInfo.CfgActiveLink == TRUE) 
+    {
+        wanmgr_setLedState(SOLID_AMBER);
+    }
+#endif
+
     return WAN_STATE_VALIDATING_WAN;
 }
 
@@ -827,12 +887,12 @@ static eWanState_t wan_transition_wan_validated(WanInterfaceData_t *wanIf)
     */
     WanManager_GetCopyofGlobalWanData(wanIf->ifName, &wan_enable, &wanData);
 
-    DmlWanIfUpdateWanStatusForGivenIfName(stGlobalInfo.CfgBaseifName, WAN_IFACE_STATUS_UP);
-
     /**
      * Get global copy of wan configuration DML data from DML layer.
     */
     DmlWanIfGetCopyOfGlobalInfoForGivenBaseIfName(wanIf->baseIfName, &stGlobalInfo);
+
+    DmlWanIfUpdateWanStatusForGivenIfName(stGlobalInfo.CfgBaseifName, WAN_IFACE_STATUS_UP);
 
     if( stGlobalInfo.CfgEnablePPP == FALSE )
     {
@@ -1002,11 +1062,13 @@ static eWanState_t wan_transition_ipv4_up(WanInterfaceData_t *wanIf)
     */
 
 #ifdef _HUB4_PRODUCT_REQ_
-    util_setWanLedState(SOLID_GREEN);
+    if (stGlobalInfo.CfgActiveLink == TRUE) 
+    {
+        wanmgr_setLedState(SOLID_GREEN);
+    }
 #endif
 
-
-    DmlWanIfSetCfgIpv4Status(wanIf->baseIfName, WAN_IFACE_IPV4_STATE_UP);
+    DmlWanIfSetIPState(stGlobalInfo.CfgWanName, WAN_IFACE_IPV4_STATE, WAN_IFACE_IP_STATE_UP);
 
     if( stGlobalInfo.CfgIpv6Status == WAN_IFACE_IPV6_STATE_UP )
         return WAN_STATE_DUAL_STACK_ACTIVE;
@@ -1030,6 +1092,11 @@ static eWanState_t wan_transition_ipv4_down(WanInterfaceData_t *wanIf)
      * Get global copy of wan configuration DML data from DML layer.
      */
     DmlWanIfGetCopyOfGlobalInfoForGivenBaseIfName(wanIf->baseIfName, &stGlobalInfo);
+    if ((stGlobalInfo.CfgLinkStatus != WAN_IFACE_LINKSTATUS_UP) ||
+        (stGlobalInfo.CfgPhyStatus == WAN_IFACE_PHY_STATUS_DOWN))
+    {
+        WanManager_UpdateGlobalWanData(IPV4_STATE_UP, FALSE);
+    }
     /**
      * Get global copy of wan interface data.
      */
@@ -1046,10 +1113,13 @@ static eWanState_t wan_transition_ipv4_down(WanInterfaceData_t *wanIf)
     {
     }*/
 
-    DmlWanIfSetCfgIpv4Status(wanIf->baseIfName, WAN_IFACE_IPV4_STATE_DOWN);
+    DmlWanIfSetIPState(stGlobalInfo.CfgWanName, WAN_IFACE_IPV4_STATE, WAN_IFACE_IP_STATE_DOWN);
 
 #ifdef _HUB4_PRODUCT_REQ_
-        util_setWanLedState(SOLID_AMBER);
+    if (stGlobalInfo.CfgActiveLink == TRUE) 
+    {
+        wanmgr_setLedState(SOLID_AMBER);
+    }
 #endif
 
     if( stGlobalInfo.CfgIpv6Status == WAN_IFACE_IPV6_STATE_UP )
@@ -1101,17 +1171,23 @@ static eWanState_t wan_transition_ipv6_up(WanInterfaceData_t *wanIf)
     }
     */
 
-    DmlWanIfSetCfgIpv6Status(wanIf->baseIfName, TRUE);
+    DmlWanIfSetIPState(stGlobalInfo.CfgWanName, WAN_IFACE_IPV6_STATE, WAN_IFACE_IP_STATE_UP);
 
     if( stGlobalInfo.CfgIpv4Status == WAN_IFACE_IPV4_STATE_UP )
     {
 #ifdef _HUB4_PRODUCT_REQ_
-        util_setWanLedState(SOLID_GREEN);
+        if (stGlobalInfo.CfgActiveLink == TRUE) 
+        {
+            wanmgr_setLedState(SOLID_GREEN);
+        }
 #endif
         return WAN_STATE_DUAL_STACK_ACTIVE;
     }
 #ifdef _HUB4_PRODUCT_REQ_
-    util_setWanLedState(SOLID_AMBER);
+    if (stGlobalInfo.CfgActiveLink == TRUE) 
+    {
+        wanmgr_setLedState(SOLID_AMBER);
+    }
 #endif
     return WAN_STATE_IPV6_LEASED;
 }
@@ -1132,6 +1208,12 @@ static eWanState_t wan_transition_ipv6_down(WanInterfaceData_t *wanIf)
      * Get global copy of wan configuration DML data from DML layer.
      */
     DmlWanIfGetCopyOfGlobalInfoForGivenBaseIfName(wanIf->baseIfName, &stGlobalInfo);
+    if ((stGlobalInfo.CfgLinkStatus != WAN_IFACE_LINKSTATUS_UP) ||
+        (stGlobalInfo.CfgPhyStatus == WAN_IFACE_PHY_STATUS_DOWN))
+    {
+        WanManager_UpdateGlobalWanData(IPV6_STATE_UP, FALSE);
+    }
+
     /**
      * Get global copy of wan interface data.
      */
@@ -1148,17 +1230,23 @@ static eWanState_t wan_transition_ipv6_down(WanInterfaceData_t *wanIf)
     {
     }*/
 
-    DmlWanIfSetCfgIpv6Status(wanIf->baseIfName, FALSE);
+    DmlWanIfSetIPState(stGlobalInfo.CfgWanName, WAN_IFACE_IPV6_STATE, WAN_IFACE_IP_STATE_DOWN);
 
     if( stGlobalInfo.CfgIpv4Status == WAN_IFACE_IPV4_STATE_UP )
     {
 #ifdef _HUB4_PRODUCT_REQ_
-        util_setWanLedState(SOLID_GREEN);
+        if (stGlobalInfo.CfgActiveLink == TRUE) 
+        {
+            wanmgr_setLedState(SOLID_GREEN);
+        }
 #endif
         return WAN_STATE_IPV4_LEASED;
     }
 #ifdef _HUB4_PRODUCT_REQ_
-    util_setWanLedState(SOLID_AMBER);
+    if (stGlobalInfo.CfgActiveLink == TRUE) 
+    {
+        wanmgr_setLedState(SOLID_AMBER);
+    }
 #endif
 
     return WAN_STATE_OBTAINING_IP_ADDRESSES;
@@ -1209,6 +1297,13 @@ static eWanState_t wan_transition_exit(WanInterfaceData_t *wanIf)
 
     DmlWanIfUpdateWanStatusForGivenIfName(stGlobalInfo.CfgBaseifName, WAN_IFACE_STATUS_DISABLED);
     DmlWanIfUpdateRefreshFlagForGivenIfName(stGlobalInfo.CfgBaseifName, FALSE);
+
+#ifdef _HUB4_PRODUCT_REQ_
+    if (stGlobalInfo.CfgActiveLink == TRUE) 
+    {
+        wanmgr_setLedState(OFF);
+    }
+#endif
     DmlWanIfUpdateActiveLinkFlagForGivenIfName(stGlobalInfo.CfgBaseifName, FALSE);
 
     CcspTraceInfo(("%s %d - WAN state machine stopped\n", __FUNCTION__, __LINE__));
@@ -1351,39 +1446,11 @@ static int wan_setUpIPv6(const char *ifname, WanData_t* wanData)
         CcspTraceError(("%s %d - Failed to configure IPv6 DNS servers \n", __FUNCTION__, __LINE__));
     }
 
-    /* Through the length of  wan prefix is less than 64 bits, wanmanager updates
-     * the prefix length as 64 for lan features
-     */
-    int index = strcspn(wanData->ipv6Data.sitePrefix, "/");
-    if (index < strlen(wanData->ipv6Data.sitePrefix))
-    {
-        char lanPrefix[BUFLEN_48] = {0};
-        strncpy(lanPrefix, wanData->ipv6Data.sitePrefix, index);
-        if ((sizeof(lanPrefix) - index) > 3)
-        {
-            char previousPrefix[BUFLEN_48] = {0};
-            char previousPrefix_vldtime[BUFLEN_48] = {0};
-            char previousPrefix_prdtime[BUFLEN_48] = {0};
-            strncat(lanPrefix, "/64", 3);
-            sysevent_get(sysevent_fd, sysevent_token, SYSEVENT_FIELD_IPV6_PREFIX, previousPrefix, sizeof(previousPrefix));
-            sysevent_get(sysevent_fd, sysevent_token, SYSEVENT_FIELD_IPV6_PREFIXVLTIME, previousPrefix_vldtime, sizeof(previousPrefix_vldtime));
-            sysevent_get(sysevent_fd, sysevent_token, SYSEVENT_FIELD_IPV6_PREFIXPLTIME, previousPrefix_prdtime, sizeof(previousPrefix_prdtime));
-            if (strncmp(previousPrefix, lanPrefix, BUFLEN_48) == 0)
-            {
-                sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_PREVIOUS_IPV6_PREFIX, "", 0);
-                sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_PREVIOUS_IPV6_PREFIXVLTIME, "", 0);
-                sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_PREVIOUS_IPV6_PREFIXPLTIME, "", 0);
-            }
-            else if (strncmp(previousPrefix, "", BUFLEN_48) != 0)
-            {
-                sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_PREVIOUS_IPV6_PREFIX, previousPrefix, 0);
-                sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_PREVIOUS_IPV6_PREFIXVLTIME, previousPrefix_vldtime, 0);
-                sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_PREVIOUS_IPV6_PREFIXPLTIME, previousPrefix_prdtime, 0);
-            }
-            sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_IPV6_PREFIX, lanPrefix, 0);
-            sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_TR_EROUTER_DHCPV6_CLIENT_PREFIX, lanPrefix, 0);
-        }
-    }
+
+    sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_IPV6_CONNECTION_STATE, UP, 0);
+    sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_RADVD_RESTART, NULL, 0);
+    sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_DHCP_SERVER_RESTART, NULL, 0);
+    sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIREWALL_RESTART, NULL, 0);
 
     return ret;
 }
@@ -1572,3 +1639,193 @@ static int wan_updateDNS(const char *wanIfName, BOOL addIPv4, BOOL addIPv6)
 
     return ret;
 }
+
+static int validate_v6_gateway_address(void)
+{
+    char command[BUFLEN_64] = {0};
+    char line[BUFLEN_128] = {0};
+    char defaultGateway[BUFLEN_64] = {0};
+    int defaultGatewayLen = 64;
+    FILE *fp;
+    int ret = RETURN_OK;
+
+    snprintf(command, sizeof(command), "ip -6 route show default | grep default | awk '{print $3}'");
+
+    fp = popen(command, "r");
+
+    if (fp)
+    {
+        if (fgets(line, sizeof(line), fp) != NULL)
+        {
+            char *token = strtok(line, "\n"); // get string up until newline character
+            if (token)
+            {
+                strncpy(defaultGateway, token, defaultGatewayLen);
+                CcspTraceInfo(("IPv6 Default Gateway Address  = %s \n", defaultGateway));
+            }
+            else
+            {
+                CcspTraceError(("Could not parse IPv6 Gateway Address \n"));
+                ret = RETURN_ERR;
+            }
+        }
+        else
+        {
+            ret = RETURN_ERR;
+        }
+        pclose(fp);
+    }
+    else
+    {
+        CcspTraceError(("Failed to get the default Gateway Address \n"));
+        ret = RETURN_ERR;
+    }
+
+    return ret;
+}
+
+static int checkIpv6LanAddressIsReadyToUse()
+{
+    char buffer[BUFLEN_256] = {0};
+    FILE *fp_dad   = NULL;
+    FILE *fp_route = NULL;
+    int address_flag   = 0;
+    int dad_flag       = 0;
+    int route_flag     = 0;
+    struct ifaddrs *ifap = NULL;
+    struct ifaddrs *ifa  = NULL;
+    char addr[INET6_ADDRSTRLEN] = {0};
+    int i;
+
+    /* We need to check the interface has got an IPV6-prefix , beacuse P-and-M can send
+    the same event when interface is down, so we ensure send the UP event only
+    when interface has an IPV6-prefix.
+    */
+    if (!getifaddrs(&ifap)) {
+        for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+            if(strncmp(ifa->ifa_name,ETH_BRIDGE_NAME, strlen(ETH_BRIDGE_NAME)))
+                continue;
+            if (ifa->ifa_addr->sa_family != AF_INET6)
+                continue;
+            getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in6), addr,
+                    sizeof(addr), NULL, 0, NI_NUMERICHOST);
+            if((strncmp(addr + (strlen(addr) - 3), "::1", 3) == 0)){
+                address_flag = 1;
+                break;
+            }
+        }//for loop
+        freeifaddrs(ifap);
+    }//getifaddr close
+
+    if(address_flag == 0) {
+        return -1;
+    }
+    /* Check Duplicate Address Detection (DAD) status. The way it works is that
+       after an address is added to an interface, the operating system uses the
+       Neighbor Discovery Protocol to check if any other host on the network
+       has the same address. The whole process will take around 3 to 4 seconds
+       to complete. Also we need to check and ensure that the gateway has
+       a valid default route entry.
+    */
+    for(i=0; i<15; i++) {
+        buffer[0] = '\0';
+        if(dad_flag == 0) {
+            if ((fp_dad = popen("ip address show dev brlan0 tentative", "r"))) {
+                if(fp_dad != NULL) {
+                    fgets(buffer, BUFLEN_256, fp_dad);
+                    if(strlen(buffer) == 0 ) {
+                        dad_flag = 1;
+                    }
+                    pclose(fp_dad);
+                }
+            }
+        }
+
+        if(route_flag == 0) {
+            buffer[0] = '\0';
+            if ((fp_route = popen("ip -6 ro | grep default", "r"))) {
+                if(fp_route != NULL) {
+                    fgets(buffer, BUFLEN_256, fp_route);
+                    if(strlen(buffer) > 0 ) {
+                        route_flag = 1;
+                    }
+                    pclose(fp_route);
+                }
+            }
+        }
+
+        if(dad_flag == 0 || route_flag == 0) {
+            sleep(1);
+        }
+        else {
+            break;
+       }
+    }
+
+    if(dad_flag == 0 || route_flag == 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
+static int checkIpv6AddressAssignedToBridge()
+{
+    char lanPrefix[BUFLEN_128] = {0};
+    int ret = RETURN_ERR;
+
+    sysevent_get(sysevent_fd, sysevent_token, SYSEVENT_GLOBAL_IPV6_PREFIX_SET, lanPrefix, sizeof(lanPrefix));
+
+    if(strlen(lanPrefix) > 0)
+    {
+        if ((validate_v6_gateway_address() == RETURN_OK) && (checkIpv6LanAddressIsReadyToUse() == 0))
+        {
+            ret = RETURN_OK;
+        }
+    }
+
+    return ret;
+}
+
+static int setUpLanPrefixIPv6(WanData_t* wanData)
+{
+    if (wanData == NULL)
+    {
+        CcspTraceError(("%s %d - Invalid memory \n", __FUNCTION__, __LINE__));
+        return RETURN_ERR;
+    }
+
+    int index = strcspn(wanData->ipv6Data.sitePrefix, "/");
+    if (index < strlen(wanData->ipv6Data.sitePrefix))
+    {
+        char lanPrefix[BUFLEN_48] = {0};
+        strncpy(lanPrefix, wanData->ipv6Data.sitePrefix, index);
+        if ((sizeof(lanPrefix) - index) > 3)
+        {
+            char previousPrefix[BUFLEN_48] = {0};
+            char previousPrefix_vldtime[BUFLEN_48] = {0};
+            char previousPrefix_prdtime[BUFLEN_48] = {0};
+            strncat(lanPrefix, "/64", 3);
+            sysevent_get(sysevent_fd, sysevent_token, SYSEVENT_FIELD_IPV6_PREFIX, previousPrefix, sizeof(previousPrefix));
+            sysevent_get(sysevent_fd, sysevent_token, SYSEVENT_FIELD_IPV6_PREFIXVLTIME, previousPrefix_vldtime, sizeof(previousPrefix_vldtime));
+            sysevent_get(sysevent_fd, sysevent_token, SYSEVENT_FIELD_IPV6_PREFIXPLTIME, previousPrefix_prdtime, sizeof(previousPrefix_prdtime));
+            if (strncmp(previousPrefix, lanPrefix, BUFLEN_48) == 0)
+            {
+                sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_PREVIOUS_IPV6_PREFIX, "", 0);
+                sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_PREVIOUS_IPV6_PREFIXVLTIME, "", 0);
+                sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_PREVIOUS_IPV6_PREFIXPLTIME, "", 0);
+            }
+            else if (strncmp(previousPrefix, "", BUFLEN_48) != 0)
+            {
+                sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_PREVIOUS_IPV6_PREFIX, previousPrefix, 0);
+                sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_PREVIOUS_IPV6_PREFIXVLTIME, previousPrefix_vldtime, 0);
+                sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_PREVIOUS_IPV6_PREFIXPLTIME, previousPrefix_prdtime, 0);
+            }
+            sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_IPV6_PREFIX, lanPrefix, 0);
+            sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_FIELD_TR_EROUTER_DHCPV6_CLIENT_PREFIX, lanPrefix, 0);
+        }
+    }
+
+    return RETURN_OK;
+}
+

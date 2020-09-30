@@ -161,30 +161,3 @@ ANSC_STATUS WanController_updateWanActiveLinkFlag(int instance, bool flag) {
 
     return ANSC_STATUS_SUCCESS;
 }
-
-ANSC_STATUS WanController_updateWanStatus(int instance, DML_WAN_IFACE_STATUS status) {
-    PDATAMODEL_WAN_IFACE    pMyObject  = (PDATAMODEL_WAN_IFACE)g_pBEManager->hWanIface;
-    PDML_WAN_IFACE p_Interface = NULL;
-    int wan_if_count = 0;
-    int iLoopCount = 0;
-
-    if(instance < 0 || pMyObject == NULL) {
-        return ANSC_STATUS_FAILURE;
-    }
-
-    p_Interface = pMyObject->pWanIface;
-    wan_if_count = pMyObject->ulTotalNoofWanInterfaces;
-
-    for( iLoopCount = 0 ; iLoopCount < wan_if_count ; iLoopCount++ ) {
-        if (p_Interface[iLoopCount].ulInstanceNumber == (instance + 1)) {
-            p_Interface[iLoopCount].CfgStatus = status;
-            /**
-             * Update global wan data object for the state machine.
-            */
-            DmlWanIfSetCfgStatus(iLoopCount, status);
-            break;
-        }
-    }
-
-    return ANSC_STATUS_SUCCESS;
-}

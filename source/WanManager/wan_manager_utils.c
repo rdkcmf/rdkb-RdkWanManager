@@ -167,25 +167,6 @@ static ANSC_STATUS readIAPDPrefixFromFile(char *prefix, int buflen, int *plen, i
 #endif
 
 /***************************************************************************
- * @brief API used to enable/disable dibbler client
- * @param enable boolean contains enable flag
- * @return ANSC_STATUS_SUCCESS if the operation is successful
- * @return ANSC_STATUS_FAILURE if the operation is failure
- ****************************************************************************/ 
-static ANSC_STATUS setDibblerClientEnable(BOOL enable);
-/***************************************************************************
- * @brief API used to set the given data model with values
- * @param pComponent: Name of the dbus component
- * @param pBus: pointer to the dbus object
- * @param pParamName: Name of the data model
- * @param pParamVal: Value of the data model
- * @param dataType_e: Type of the data model
- * @param bCommit: Commit flag
- * @return ANSC_STATUS_SUCCESS if the operation is successful
- * @return ANSC_STATUS_FAILURE if the operation is failure
- ****************************************************************************/
-static ANSC_STATUS SetDataModelParamValues( char *pComponent, char *pBus, char *pParamName, char *pParamVal, enum dataType_e type, BOOLEAN bCommit );
-/***************************************************************************
  * @brief Thread that sets enable/disable data model of dhcpv6 client
  * @param arg: enable/disable flag to start and stop dhcp6c client 
  ****************************************************************************/
@@ -505,40 +486,13 @@ int WanManager_Ipv6AddrUtil(char *ifname, Ipv6OperType opr, int preflft, int val
 
 ANSC_STATUS WanManager_StartDhcpv6Client(const char *pcInterfaceName, BOOL isPPP)
 {
-    ANSC_STATUS ret = ANSC_STATUS_SUCCESS;
+    char cmdLine[BUFLEN_128];
 
-    CcspTraceInfo(("Exit WanManager_StartDhcpv6Client \n"));
-    if(setDibblerClientEnable(FALSE) == ANSC_STATUS_SUCCESS)
-    {
-        if(setDibblerClientEnable(TRUE) != ANSC_STATUS_SUCCESS)
-        {
-            CcspTraceInfo(("WanManager_StartDhcpv6Client is failure \n"));
-        }
-    }
-    else
-    {
-        CcspTraceInfo(("WanManager_StartDhcpv6Client is failure \n"));
-    }
-    return ret;
-}
-
-uint32_t WanManager_RestartDhcp6c(const char *ifName_info, BOOL dynamicIpEnabled,
-                                BOOL pdEnabled, BOOL aftrName)
-{
-
-    if(setDibblerClientEnable(FALSE) == ANSC_STATUS_SUCCESS)
-    {
-        if(setDibblerClientEnable(TRUE) != ANSC_STATUS_SUCCESS)
-        {
-            CcspTraceInfo(("WanManager_StartDhcpv6Client is failure \n"));
-        }
-    }
-    else
-    {
-        CcspTraceInfo(("WanManager_StartDhcpv6Client is failure \n"));
-    }
-
-    return 0;
+    CcspTraceInfo(("Enter WanManager_StartDhcpv6Client for  %s \n", DHCPV6_CLIENT_NAME));
+    sprintf(cmdLine, "%s start", DHCPV6_CLIENT_NAME);
+    system(cmdLine);
+    CcspTraceInfo(("Started %s \n", cmdLine ));
+    return ANSC_STATUS_SUCCESS;
 }
 
 /**
@@ -549,12 +503,13 @@ uint32_t WanManager_RestartDhcp6c(const char *ifName_info, BOOL dynamicIpEnabled
  */
 ANSC_STATUS WanManager_StopDhcpv6Client(BOOL boolDisconnect)
 {
-    CcspTraceInfo(("Enter WanManager_StopDhcpv6Client"));
     ANSC_STATUS ret = ANSC_STATUS_SUCCESS;
-    if(setDibblerClientEnable(FALSE) != ANSC_STATUS_SUCCESS)
-    {
-        CcspTraceInfo(("WanManager_StartDhcpv6Client is failure \n"));
-    }
+    char cmdLine[BUFLEN_128];
+
+    CcspTraceInfo(("Enter WanManager_StopDhcpv6Client for  %s \n", DHCPV6_CLIENT_NAME));
+    sprintf(cmdLine, "killall %s", DHCPV6_CLIENT_NAME);
+    system(cmdLine);
+
     CcspTraceInfo(("Exit WanManager_StopDhcpv6Client"));
     return ret;
 }
@@ -1197,6 +1152,7 @@ int WanManager_CreateResolvCfg(const DnsData_t *dnsInfo)
    FILE *fp = NULL;
    char cmd[BUFLEN_128]={0};
    int ret = RETURN_OK;
+   bool valid_dns = FALSE;
    if(NULL == dnsInfo)
    {
         return ANSC_STATUS_FAILURE;
@@ -1210,15 +1166,31 @@ int WanManager_CreateResolvCfg(const DnsData_t *dnsInfo)
    }
    else
    {
-        fprintf(fp, "nameserver %s \n", LOOPBACK);
         if(RETURN_OK == IsValidDnsServer(AF_INET, dnsInfo->dns_ipv4_1))
+        {
             fprintf(fp, "nameserver %s\n", dnsInfo->dns_ipv4_1);
+            valid_dns = TRUE;
+        }
         if(RETURN_OK == IsValidDnsServer(AF_INET, dnsInfo->dns_ipv4_2))
+        {
             fprintf(fp, "nameserver %s\n", dnsInfo->dns_ipv4_2);
+            valid_dns = TRUE;
+        }
         if(RETURN_OK == IsValidDnsServer(AF_INET6, dnsInfo->dns_ipv6_1))
+        {
             fprintf(fp, "nameserver %s\n", dnsInfo->dns_ipv6_1);
+            valid_dns = TRUE;
+        }
         if(RETURN_OK == IsValidDnsServer(AF_INET6, dnsInfo->dns_ipv6_2))
+        {
             fprintf(fp, "nameserver %s\n", dnsInfo->dns_ipv6_2);
+            valid_dns = TRUE;
+        }
+        if (valid_dns == FALSE)
+        {
+            CcspTraceInfo(("%s %d - No valid nameserver is available, adding loopback address for nameserver\n", __FUNCTION__,__LINE__));
+            fprintf(fp, "nameserver %s \n", LOOPBACK);
+        }
         fclose(fp);
         CcspTraceInfo(("%s %d - Active domainname servers set!\n", __FUNCTION__,__LINE__));
    }
@@ -1453,121 +1425,6 @@ uint32_t WanManager_getUpTime()
     return( info.uptime );
 }
 
-static ANSC_STATUS setDibblerClientEnable(BOOL enable)
-{
-    INT              index               = 0;
-    ANSC_STATUS      returnStatus        = ANSC_STATUS_SUCCESS;
-    pthread_t        dibblerThreadId;
-    INT              iErrorCode          = -1;
-
-    iErrorCode = pthread_create( &dibblerThreadId, NULL, &Dhcpv6HandlingThread, (void*)&enable );
-    if( 0 != iErrorCode )
-    {
-        CcspTraceInfo(("%s %d - Dhcpv6HandlingThread thread failed. EC:%d\n", __FUNCTION__, __LINE__, iErrorCode ));
-        return ANSC_STATUS_FAILURE;
-    }
-
-    while(index <= 5)
-    {
-        if(WanManager_IsApplicationRunning(DHCPV6_CLIENT_NAME) == enable)
-        {
-            return ANSC_STATUS_SUCCESS;
-        }
-        index++;
-        sleep(1);
-    }
-
-    return ANSC_STATUS_FAILURE;
-}
-
-static void* Dhcpv6HandlingThread( void *arg )
-{
-    char *ParamName  = NULL;
-    char *ParamValue = NULL;
-
-    //detach thread from caller stack
-    pthread_detach(pthread_self());
-
-    BOOL *enable_client = (BOOL *) arg;
-
-    if( NULL == enable_client )
-    {
-        CcspTraceError(("%s Invalid Memory\n", __FUNCTION__));
-        pthread_exit(NULL);
-    }
-
-    ParamName = (char *) malloc(sizeof(char) * BUFLEN_256);
-    ParamValue = (char *) malloc(sizeof(char) * BUFLEN_256);
- 
-    if(ParamName == NULL || ParamValue == NULL)
-    {
-        CcspTraceInfo(("%s %d Failed to allocate memory \n", __FUNCTION__, __LINE__));
-        return ANSC_STATUS_FAILURE;
-    }
-
-    memset(ParamName, 0, BUFLEN_256);
-    memset(ParamValue, 0, BUFLEN_256);
-
-    snprintf( ParamName, BUFLEN_256, DIBBLER_IPV6_CLIENT_ENABLE, 1 );
-    if(*enable_client)
-        snprintf( ParamValue, BUFLEN_256, "%s", "true");
-    else
-        snprintf( ParamValue, BUFLEN_256, "%s", "false");
-
-    SetDataModelParamValues( PAM_COMPONENT_NAME, PAM_DBUS_PATH, ParamName, ParamValue, ccsp_boolean, TRUE );
-
-    if(ParamName != NULL)
-    {
-        free(ParamName);
-    }
-
-    if(ParamValue != NULL)
-    {
-        free(ParamValue);
-    }
-
-    CcspTraceInfo(("%s %d Successfully set %d value to %s data model \n", __FUNCTION__, __LINE__, *enable_client, ParamName));
-    pthread_exit(NULL);
-
-    return NULL;
-}
-
-static ANSC_STATUS SetDataModelParamValues( char *pComponent, char *pBus, char *pParamName, char *pParamVal, enum dataType_e type, BOOLEAN bCommit )
-{
-    CCSP_MESSAGE_BUS_INFO *bus_info              = (CCSP_MESSAGE_BUS_INFO *)bus_handle;
-    parameterValStruct_t   param_val[1]          = { 0 };
-    char                  *faultParam            = NULL;
-    int                    ret                   = 0;
-
-    //Copy Name
-    param_val[0].parameterName  = pParamName;
-    //Copy Value
-    param_val[0].parameterValue = pParamVal;
-
-    //Copy Type
-    param_val[0].type           = type;
-	ret = CcspBaseIf_setParameterValues(
-                                        bus_handle,
-                                        pComponent,
-                                        pBus,
-                                        0,
-                                        0,
-                                        param_val,
-                                        1,
-                                        bCommit,
-                                        &faultParam
-                                       );
-
-    if( ( ret != CCSP_SUCCESS ) && ( faultParam != NULL ) )
-    {
-        CcspTraceError(("%s-%d Failed to set %s\n",__FUNCTION__,__LINE__,pParamName));
-        bus_info->freefunc( faultParam );
-        return ANSC_STATUS_FAILURE;
-    }
-
-    return ANSC_STATUS_SUCCESS;
-}
-
 static ANSC_STATUS getIfAddr6(const char *ifname , uint32_t addrIdx,
                       char *ipAddr, uint32_t *ifIndex, uint32_t *prefixLen, uint32_t *scope, uint32_t *ifaFlags)
 {
@@ -1725,7 +1582,7 @@ bool util_isFilePresent(char *filename)
    }
 }
 #ifdef _HUB4_PRODUCT_REQ_
-void util_setWanLedState (const char * LedState)
+void wanmgr_setLedState (const char * LedState)
 {
     if (sysevent_fd == -1)      return;
     sysevent_set(sysevent_fd, sysevent_token, SYSEVENT_WAN_LED_STATE, LedState, 0);
