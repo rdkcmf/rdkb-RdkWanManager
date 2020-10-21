@@ -86,7 +86,6 @@ PKG_CHECK_MODULES([DBUS],[dbus-1 >= 1.6.18])
 AC_CONFIG_FILES([Makefile
 		source/Makefile
 		source/TR-181/Makefile
-		source/TR-181/integration_src.shared/Makefile
 		source/TR-181/middle_layer_src/Makefile
 		source/WanManager/Makefile])
 AC_OUTPUT

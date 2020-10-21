@@ -20,20 +20,18 @@
 bin_PROGRAMS = wanmanager
 
 AM_CPPFLAGS = -I$(top_srcdir)/hal/include \
-		-I$(top_srcdir)/source/LogComponent \
-		-I$(top_srcdir)/source/TR-181/middle_layer_src \
-		-I$(top_srcdir)/source/TR-181/integration_src.shared \
-		-I$(top_srcdir)/source/TR-181/include \
-		-I$(top_srcdir)/../CcspCommonLibrary/source/ccsp/components/include
+        -I$(top_srcdir)/source/LogComponent \
+        -I$(top_srcdir)/source/TR-181/middle_layer_src \
+        -I$(top_srcdir)/source/TR-181/include \
+        -I$(top_srcdir)/../CcspCommonLibrary/source/ccsp/components/include
 
 
 wanmanager_DEPENDENCIES = \
         $(EXTRA_DEPENDENCIES) \
-        ${top_builddir}/source/TR-181/middle_layer_src/libCcspWanManager_middle_layer_src.la \
-        ${top_builddir}/source/TR-181/integration_src.shared/libCcspWanManager_integration_src_shared.la
+        ${top_builddir}/source/TR-181/middle_layer_src/libCcspWanManager_middle_layer_src.la
 
 wanmanager_CFLAGS = -D_ANSC_LINUX -D_ANSC_USER -D_ANSC_LITTLE_ENDIAN_ -DFEATURE_SUPPORT_RDKLOG $(DBUS_CFLAGS) $(SYSTEMD_CFLAGS)
-wanmanager_SOURCES = ssp_action.c ssp_messagebus_interface.c ssp_main.c wan_policy_fmob_impl.c wan_policy_fm_impl.c wan_policy_ppob_impl.c wan_policy_pp_impl.c wan_manager.c wan_controller.c wan_manager_db.c wan_manager_ipc.c wan_manager_utils.c wan_manager_prctl.c wan_manager_dhcpv4_apis.c
+wanmanager_SOURCES = wanmgr_main.c  wanmgr_ssp_action.c wanmgr_ssp_messagebus_interface.c wanmgr_core.c wanmgr_controller.c wanmgr_data.c wanmgr_sysevents.c wanmgr_policy_fm_impl.c wanmgr_policy_fmob_impl.c wanmgr_policy_pp_impl.c wanmgr_policy_ppob_impl.c wanmgr_interface_sm.c wanmgr_platform_events.c wanmgr_utils.c wanmgr_net_utils.c wanmgr_dhcpv4_apis.c wanmgr_dhcpv6_apis.c wanmgr_ipc.c             
 wanmanager_LDFLAGS = -lccsp_common -lrdkloggers $(DBUS_LIBS) $(SYSTEMD_LDFLAGS) -lhal_platform
 wanmanager_LDADD =  $(wanmanager_DEPENDENCIES)
 

@@ -150,12 +150,6 @@
                                     <writable>true</writable>
                                 </parameter>
                                 <parameter>
-                                    <name>EnablePPP</name>
-                                    <type>boolean</type>
-                                    <syntax>bool</syntax>
-                                    <writable>true</writable>
-                                </parameter>
-                                <parameter>
                                     <name>EnableMAPT</name>
                                     <type>boolean</type>
                                     <syntax>bool</syntax>
@@ -299,6 +293,77 @@
                                 <parameter>
                                     <name>IPv6Status</name>
                                     <type>string: Up(1),Down(2)</type>
+                                    <syntax>uint32/mapped</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                                <parameter>
+                                    <name>Path</name>
+                                    <type>string</type>
+                                    <syntax>string</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                            </parameters>
+                        </object>
+                        <object>
+                            <name>PPP</name>
+                            <objectType>object</objectType>
+                            <functions>
+                                <func_GetParamUlongValue>WanIfPPPCfg_GetParamUlongValue</func_GetParamUlongValue>
+                                <func_SetParamUlongValue>WanIfPPPCfg_SetParamUlongValue</func_SetParamUlongValue>
+                                <func_GetParamStringValue>WanIfPPPCfg_GetParamStringValue</func_GetParamStringValue>
+                                <func_SetParamStringValue>WanIfPPPCfg_SetParamStringValue</func_SetParamStringValue>
+                                <func_GetParamBoolValue>WanIfPPPCfg_GetParamBoolValue</func_GetParamBoolValue>
+                                <func_SetParamBoolValue>WanIfPPPCfg_SetParamBoolValue</func_SetParamBoolValue>
+                                <func_Validate>WanIfPPPCfg_Validate</func_Validate>
+                                <func_Commit>WanIfPPPCfg_Commit</func_Commit>
+                                <func_Rollback>WanIfPPPCfg_Rollback</func_Rollback>
+                            </functions>
+                            <parameters>
+                                <parameter>
+                                    <name>Enable</name>
+                                    <type>boolean</type>
+                                    <syntax>bool</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                                <parameter>
+                                    <name>IPCPEnable</name>
+                                    <type>boolean</type>
+                                    <syntax>bool</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                                <parameter>
+                                    <name>IPCPStatus</name>
+                                    <type>string: Down(1),Up(2)</type>
+                                    <syntax>uint32/mapped</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                                <parameter>
+                                    <name>IPv6CPEnable</name>
+                                    <type>boolean</type>
+                                    <syntax>bool</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                                <parameter>
+                                    <name>IPv6CPStatus</name>
+                                    <type>string: Down(1),Up(2)</type>
+                                    <syntax>uint32/mapped</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                                <parameter>
+                                    <name>LCPStatus</name>
+                                    <type>string: Down(1),Up(2)</type>
+                                    <syntax>uint32/mapped</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                                <parameter>
+                                    <name>LinkStatus</name>
+                                    <type>string: Down(1),Up(2)</type>
+                                    <syntax>uint32/mapped</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                                <parameter>
+                                    <name>LinkType</name>
+                                    <type>string: PPPoA(1),PPPoE(2)</type>
                                     <syntax>uint32/mapped</syntax>
                                     <writable>true</writable>
                                 </parameter>
