@@ -835,6 +835,37 @@ SListPushMarkingEntryByInsNum
     return ANSC_STATUS_SUCCESS;
 }
 
+PCONTEXT_LINK_OBJECT SListGetEntryByInsNum( PSLIST_HEADER pListHead, ULONG InstanceNumber)
+{
+    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
+    PCONTEXT_LINK_OBJECT            pContextEntry = (PCONTEXT_LINK_OBJECT)NULL;
+    PSINGLE_LINK_ENTRY              pSLinkEntry       = (PSINGLE_LINK_ENTRY       )NULL;
+    ULONG                           ulIndex           = 0;
+
+    if ( pListHead->Depth == 0 )
+    {
+        return NULL;
+    }
+    else
+    {
+        pSLinkEntry = AnscSListGetFirstEntry(pListHead);
+
+        for ( ulIndex = 0; ulIndex < pListHead->Depth; ulIndex++ )
+        {
+            pContextEntry = ACCESS_CONTEXT_LINK_OBJECT(pSLinkEntry);
+            pSLinkEntry       = AnscSListGetNextEntry(pSLinkEntry);
+
+            if ( pContextEntry->InstanceNumber == InstanceNumber )
+            {
+                return pContextEntry;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+
 ANSC_STATUS
 DmlCheckAndProceedMarkingOperations
     (
@@ -1399,4 +1430,44 @@ ANSC_STATUS WanMgr_WanConfigInit(void)
     }
 
     return retStatus;
+}
+
+
+ANSC_STATUS
+SListPushEntryByInsNum
+    (
+        PSLIST_HEADER               pListHead,
+        PCONTEXT_LINK_OBJECT   pContext
+    )
+{
+    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
+    PCONTEXT_LINK_OBJECT       pContextEntry = (PCONTEXT_LINK_OBJECT)NULL;
+    PSINGLE_LINK_ENTRY              pSLinkEntry       = (PSINGLE_LINK_ENTRY       )NULL;
+    ULONG                           ulIndex           = 0;
+
+    if ( pListHead->Depth == 0 )
+    {
+        AnscSListPushEntryAtBack(pListHead, &pContext->Linkage);
+    }
+    else
+    {
+        pSLinkEntry = AnscSListGetFirstEntry(pListHead);
+
+        for ( ulIndex = 0; ulIndex < pListHead->Depth; ulIndex++ )
+        {
+            pContextEntry = ACCESS_CONTEXT_LINK_OBJECT(pSLinkEntry);
+            pSLinkEntry       = AnscSListGetNextEntry(pSLinkEntry);
+
+            if ( pContext->InstanceNumber < pContextEntry->InstanceNumber )
+            {
+                AnscSListPushEntryByIndex(pListHead, &pContext->Linkage, ulIndex);
+
+                return ANSC_STATUS_SUCCESS;
+            }
+        }
+
+        AnscSListPushEntryAtBack(pListHead, &pContext->Linkage);
+    }
+
+    return ANSC_STATUS_SUCCESS;
 }

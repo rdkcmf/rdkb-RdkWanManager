@@ -34,12 +34,16 @@
 
 #define LED_OFF_STR             "Off"
 #define LED_FLASHING_AMBER_STR  "Flashing Amber"
+#define LED_FLASHING_GREEN_STR  "Flashing Green"
 #define LED_SOLID_AMBER_STR     "Solid Amber"
 #define LED_SOLID_GREEN_STR     "Solid Green"
 
 // * The following defines are used for sysevent retrieval. */
 #define SYSEVENT_IPV4_CONNECTION_STATE "ipv4_connection_state"
+#define SYSEVENT_CURRENT_IPV4_LINK_STATE  "current_ipv4_link_state"
 #define SYSEVENT_IPV6_CONNECTION_STATE "ipv6_connection_state"
+#define SYSEVENT_CURRENT_WAN_STATE "current_wan_state"
+#define SYSEVENT_WAN_START_TIME "wan_start_time"
 #define SYSEVENT_IPV4_IP_ADDRESS "ipv4_%s_ipaddr"
 #define SYSEVENT_IPV4_WAN_ADDRESS "ipv4_wan_ipaddr"
 #define SYSEVENT_IPV4_SUBNET "ipv4_%s_subnet"
@@ -56,6 +60,7 @@
 #define SYSEVENT_DHCPV4_TIME_OFFSET "dhcpv4_time_offset"
 #define SYSEVENT_IPV4_US_CURRENT_RATE "ipv4_%s_us_current_rate_0"
 #define SYSEVENT_IPV4_DS_CURRENT_RATE "ipv4_%s_ds_current_rate_0"
+#define SYSEVENT_FIELD_SERVICE_ROUTED_STATUS "routed-status"
 
 /*dhcp server restart*/
 #define SYSEVENT_DHCP_SERVER_RESTART "dhcp_server-restart"
@@ -77,18 +82,45 @@
 #define SYSEVENT_FIELD_PREVIOUS_IPV6_PREFIXPLTIME   "previous_ipv6_prefix_prdtime"
 #define SYSEVENT_RADVD_RESTART                      "radvd_restart"
 #define SYSEVENT_GLOBAL_IPV6_PREFIX_SET             "lan_prefix_set"
+#define SYSEVENT_ULA_ADDRESS                        "ula_address"
+#define SYSEVENT_ULA_ENABLE                         "lan_ula_enable"
+#define SYSEVENT_IPV6_ENABLE                        "lan_ipv6_enable"
 
 #define SYSEVENT_FIELD_TR_BRLAN0_DHCPV6_SERVER_ADDRESS        "tr_brlan0_dhcpv6_server_v6addr"
 #define SYSEVENT_FIELD_TR_EROUTER_DHCPV6_CLIENT_PREFIX        "tr_erouter0_dhcpv6_client_v6pref"
 
 /*WAN specific sysevent fieldnames*/
 #define SYSEVENT_CURRENT_WAN_IFNAME "current_wan_ifname"
-#define SYSEVENT_WAN_STATUS "wan-status"
+#define SYSEVENT_WAN_STATUS         "wan-status"
+#define SYSEVENT_LAN_STATUS         "lan-status"
 #define SYSEVENT_CURRENT_WAN_IPADDR "current_wan_ipaddr"
 #define SYSEVENT_CURRENT_WAN_SUBNET "current_wan_subnet"
 #define SYSEVENT_WAN_SERVICE_STATUS "wan_service-status"
+#define SYSEVENT_PNM_STATUS         "pnm-status"
+#define SYSEVENT_LAN_START          "lan-start"
+#define SYSEVENT_DHCP_SERVER_RESYNC "dhcp_server-resync"
+#define SYSEVENT_START_MISC         "start-misc"
+#define SYSEVENT_PRIMARY_LAN_L3NET  "primary_lan_l3net"
+#define SYSEVENT_L3NET_INSTANCES    "l3net_instances"
+#define SYSEVENT_IPV4_UP            "ipv4-up"
+#define SYSEVENT_LAN_ULA_ADDRESS    "lan_ula_address"
+#define SYSEVENT_VENDOR_SPEC        "vendor_spec"
+#define SYSEVENT_PRIMARY_LAN_L3NET  "primary_lan_l3net"
+#define SYSEVENT_IPV6_PREFIX        "ipv6_prefix"
+#define SYSEVENT_RADVD_RESTART      "radvd_restart"
+#define SYSEVENT_GLOBAL_IPV6_PREFIX_CLEAR   "lan_prefix_clear"
+#define SYSEVENT_ETHWAN_INITIALIZED   "ethwan-initialized"
+#define SYSEVENT_ETH_WAN_MAC          "eth_wan_mac"
+#define SYSEVENT_BRIDGE_MODE          "bridge_mode"
+#define SYSEVENT_WAN_START            "wan-start"
+#define SYSCFG_ETH_WAN_ENABLED        "eth_wan_enabled"
+#define SYSCFG_NTP_ENABLED            "ntp_enabled"
+#define SYSEVENT_LAN_PD_INTERFACES    "lan_pd_interfaces"
+#define SYSEVENT_MULTINET_NAME        "multinet_1-name"
+#define SYSEVENT_MULTINET_INSTANCES   "multinet-instances"
+#define SYSEVENT_TOPOLOGY_MODE        "erouter_topology-mode"
 
-///*firewall restart*/
+//firewall restart
 #define SYSEVENT_FIREWALL_RESTART "firewall-restart"
 #define SYSEVENT_FIREWALL_STATUS "firewall-status"
 
@@ -101,11 +133,11 @@
 #define WAN_STATUS_STARTED      "started"
 #define WAN_STATUS_STOPPED      "stopped"
 #define FIREWALL_STATUS_STARTED "started"
-#define WAN_STATUS_UP           "up"
-#define WAN_STATUS_DOWN         "down"
-//#define SET "set"
-//#define UNSET "unset"
-//#define RESET "reset"
+#define STATUS_UP_STRING        "up"
+#define STATUS_DOWN_STRING      "down"
+#define SET "set"
+#define UNSET "unset"
+#define RESET "reset"
 
 /**********************************************************************
                 FUNCTION PROTOTYPES

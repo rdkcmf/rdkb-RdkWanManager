@@ -56,6 +56,7 @@
 #include "ansc_platform.h"
 #include "ccsp_psm_helper.h"
 #include "wanmgr_data.h"
+#include "wanmgr_data.h"
 
 extern char g_Subsystem[32];
 extern ANSC_HANDLE bus_handle;
@@ -436,4 +437,48 @@ void* WanMgr_RdkBus_WanIfRefreshThread( void *arg )
     pthread_exit(NULL);
 
     return NULL;
+}
+
+ANSC_STATUS DmlGetInstanceByKeywordFromPandM(char *ifname, int *piInstanceNumber)
+{
+    char acTmpReturnValue[256] = {0};
+    int iLoopCount,
+        iTotalNoofEntries;
+    if (ANSC_STATUS_FAILURE == WanMgr_RdkBus_GetParamValues(PAM_COMPONENT_NAME, PAM_DBUS_PATH, PAM_NOE_PARAM_NAME, acTmpReturnValue))
+    {
+        CcspTraceError(("[%s][%d]Failed to get param value\n", __FUNCTION__, __LINE__));
+        return ANSC_STATUS_FAILURE;
+    }
+
+    //Total count
+    iTotalNoofEntries = atoi(acTmpReturnValue);
+
+    if ( 0 >= iTotalNoofEntries )
+    {
+        return ANSC_STATUS_SUCCESS;
+    }
+
+    //Traverse from loop
+    for (iLoopCount = 0; iLoopCount < iTotalNoofEntries; iLoopCount++)
+    {
+        char acTmpQueryParam[256] = {0};
+
+        //Query
+        snprintf(acTmpQueryParam, sizeof(acTmpQueryParam), PAM_IF_PARAM_NAME, iLoopCount + 1);
+        memset(acTmpReturnValue, 0, sizeof(acTmpReturnValue));
+        if (ANSC_STATUS_FAILURE == WanMgr_RdkBus_GetParamValues(PAM_COMPONENT_NAME, PAM_DBUS_PATH, acTmpQueryParam, acTmpReturnValue))
+        {
+            CcspTraceError(("[%s][%d] Failed to get param value\n", __FUNCTION__, __LINE__));
+            continue;
+        }
+
+        //Compare name
+        if (0 == strcmp(acTmpReturnValue, ifname))
+        {
+            *piInstanceNumber = iLoopCount + 1;
+             break;
+        }
+    }
+
+    return ANSC_STATUS_SUCCESS;
 }

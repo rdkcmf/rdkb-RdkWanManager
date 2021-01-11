@@ -62,18 +62,15 @@
 #include "wanmgr_plugin_main_apis.h"
 #include "wanmgr_dml_apis.h"
 #include "wanmgr_dml_iface_apis.h"
-
-static WANMGR_BACKEND_OBJ*     g_pWanMgrBE;
-
+#include "wanmgr_dml_dhcpv4.h"
+#include "wanmgr_dml_dhcpv6.h"
 
 void *                  g_pDslhDmlAgent;
 extern ANSC_HANDLE      g_MessageBusHandle_Irep;
 extern char             g_SubSysPrefix_Irep[32];
 extern COSARepopulateTableProc            g_COSARepopulateTable;
 
-
-
-#define THIS_PLUGIN_VERSION                         1
+#define THIS_PLUGIN_VERSION  1
 
 
 int ANSC_EXPORT_API WanManagerDmlInit(ULONG uMaxVersionSupported, void* hCosaPlugInfo)
@@ -441,6 +438,77 @@ int ANSC_EXPORT_API WanManagerDmlInit(ULONG uMaxVersionSupported, void* hCosaPlu
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfValidation_Validate", WanIfValidation_Validate);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfValidation_Commit", WanIfValidation_Commit);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfValidation_Rollback", WanIfValidation_Rollback);
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DHCPv6_GetParamBoolValue", DHCPv6_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DHCPv6_GetParamIntValue", DHCPv6_GetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DHCPv6_GetParamUlongValue", DHCPv6_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DHCPv6_GetParamStringValue", DHCPv6_GetParamStringValue);
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client3_GetEntryCount", Client3_GetEntryCount);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client3_GetEntry", Client3_GetEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client3_AddEntry", Client3_AddEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client3_DelEntry", Client3_DelEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client3_GetParamBoolValue", Client3_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client3_GetParamIntValue", Client3_GetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client3_GetParamUlongValue", Client3_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client3_GetParamStringValue", Client3_GetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client3_SetParamBoolValue", Client3_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client3_SetParamIntValue", Client3_SetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client3_SetParamUlongValue", Client3_SetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client3_SetParamStringValue", Client3_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client3_Validate", Client3_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client3_Commit", Client3_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client3_Rollback", Client3_Rollback);
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Server2_GetEntryCount", Server2_GetEntryCount);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Server2_GetEntry", Server2_GetEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Server2_IsUpdated", Server2_IsUpdated);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Server2_Synchronize", Server2_Synchronize);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Server2_GetParamBoolValue", Server2_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Server2_GetParamIntValue", Server2_GetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Server2_GetParamUlongValue", Server2_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Server2_GetParamStringValue", Server2_GetParamStringValue);
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption1_GetEntryCount", SentOption1_GetEntryCount);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption1_GetEntry", SentOption1_GetEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption1_AddEntry", SentOption1_AddEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption1_DelEntry", SentOption1_DelEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption1_GetParamBoolValue", SentOption1_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption1_GetParamIntValue", SentOption1_GetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption1_GetParamUlongValue", SentOption1_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption1_GetParamStringValue", SentOption1_GetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption1_SetParamBoolValue", SentOption1_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption1_SetParamIntValue", SentOption1_SetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption1_SetParamUlongValue", SentOption1_SetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption1_SetParamStringValue", SentOption1_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption1_Validate", SentOption1_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption1_Commit", SentOption1_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption1_Rollback", SentOption1_Rollback);
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DHCPv4_GetParamBoolValue", DHCPv4_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DHCPv4_GetParamIntValue", DHCPv4_GetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DHCPv4_GetParamUlongValue", DHCPv4_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DHCPv4_GetParamStringValue", DHCPv4_GetParamStringValue);
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client_GetEntryCount", Client_GetEntryCount);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client_GetEntry", Client_GetEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client_AddEntry", Client_AddEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client_DelEntry", Client_DelEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client_GetParamBoolValue", Client_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client_GetParamIntValue", Client_GetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client_GetParamUlongValue", Client_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client_GetParamStringValue", Client_GetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client_SetParamBoolValue", Client_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client_SetParamIntValue", Client_SetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client_SetParamUlongValue", Client_SetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client_SetParamStringValue", Client_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client_Validate", Client_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client_Commit", Client_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Client_Rollback", Client_Rollback);
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption_GetEntryCount", SentOption_GetEntryCount);
+
+
 
     /* Create backend framework */
     g_pWanMgrBE = (WANMGR_BACKEND_OBJ*)BackEndManagerCreate();

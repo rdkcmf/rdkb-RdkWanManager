@@ -24,7 +24,7 @@
 #include "ansc_platform.h"
 
 
-ANSC_STATUS WanMgr_StartIpcServer(INT interfaceIdx); /*IPC server to handle WAN Manager clients*/
+ANSC_STATUS WanMgr_StartIpcServer(); /*IPC server to handle WAN Manager clients*/
 ANSC_STATUS WanMgr_CloseIpcServer(void);
 
 

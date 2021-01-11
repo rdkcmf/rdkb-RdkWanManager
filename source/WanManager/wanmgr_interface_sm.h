@@ -29,7 +29,8 @@
 #include "wanmgr_rdkbus_common.h"
 #include "wanmgr_data.h"
 
-
+#define WAN_STATUS_UP   "up"
+#define WAN_STATUS_DOWN "down"
 
 #include <sysevent/sysevent.h>
 extern int sysevent_fd;

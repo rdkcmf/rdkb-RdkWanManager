@@ -158,7 +158,7 @@ static int   ipcListenFd;   /* Unix domain IPC listening socket fd */
 //}
 
 
-static ANSC_STATUS WanMgr_IpcNewIpv4Msg(WanIpcCtrl_t* pWanIpcCtrl, ipc_dhcpv4_data_t* pNewIpv4Msg)
+static ANSC_STATUS WanMgr_IpcNewIpv4Msg(ipc_dhcpv4_data_t* pNewIpv4Msg)
 {
     ANSC_STATUS retStatus = ANSC_STATUS_FAILURE;
     INT try = 0;
@@ -199,7 +199,7 @@ static ANSC_STATUS WanMgr_IpcNewIpv4Msg(WanIpcCtrl_t* pWanIpcCtrl, ipc_dhcpv4_da
 }
 
 
-static ANSC_STATUS WanMgr_IpcNewIpv6Msg(WanIpcCtrl_t* pWanIpcCtrl, ipc_dhcpv6_data_t* pNewIpv6Msg)
+static ANSC_STATUS WanMgr_IpcNewIpv6Msg(ipc_dhcpv6_data_t* pNewIpv6Msg)
 {
     ANSC_STATUS retStatus = ANSC_STATUS_FAILURE;
     INT try = 0;
@@ -207,8 +207,7 @@ static ANSC_STATUS WanMgr_IpcNewIpv6Msg(WanIpcCtrl_t* pWanIpcCtrl, ipc_dhcpv6_da
     while((retStatus != ANSC_STATUS_SUCCESS) && (try < WANMGR_MAX_IPC_PROCCESS_TRY))
     {
         //get iface data
-        WanMgr_Iface_Data_t* pWanDmlIfaceData = WanMgr_GetIfaceData_locked(pWanIpcCtrl->interfaceIdx);
-        //WanMgr_Iface_Data_t* pWanDmlIfaceData = WanMgr_GetIfaceDataByName_locked(dhcp6cInfoNew->ifname);
+        WanMgr_Iface_Data_t* pWanDmlIfaceData = WanMgr_GetIfaceDataByName_locked(pNewIpv6Msg->ifname);
         if(pWanDmlIfaceData != NULL)
         {
             DML_WAN_IFACE* pIfaceData = &(pWanDmlIfaceData->data);
@@ -244,11 +243,6 @@ static ANSC_STATUS WanMgr_IpcNewIpv6Msg(WanIpcCtrl_t* pWanIpcCtrl, ipc_dhcpv6_da
 
 static void* IpcServerThread( void *arg )
 {
-    WanIpcCtrl_t* pWanIpcCtrl = (WanIpcCtrl_t*) arg;
-    if(pWanIpcCtrl == NULL)
-    {
-        pthread_exit(NULL);
-    }
 
     //detach thread from caller stack
     pthread_detach(pthread_self());
@@ -269,13 +263,13 @@ static void* IpcServerThread( void *arg )
             switch(ipc_msg.msg_type)
             {
                 case DHCPC_STATE_CHANGED:
-                    if (WanMgr_IpcNewIpv4Msg(pWanIpcCtrl, &(ipc_msg.data.dhcpv4)) != ANSC_STATUS_SUCCESS)
+                    if (WanMgr_IpcNewIpv4Msg(&(ipc_msg.data.dhcpv4)) != ANSC_STATUS_SUCCESS)
                     {
                         CcspTraceError(("[%s-%d] Failed to proccess DHCPv4 state change message \n", __FUNCTION__, __LINE__));
                     }
                     break;
                 case DHCP6C_STATE_CHANGED:
-                    if (WanMgr_IpcNewIpv6Msg(pWanIpcCtrl, &(ipc_msg.data.dhcpv6)) != ANSC_STATUS_SUCCESS)
+                    if (WanMgr_IpcNewIpv6Msg(&(ipc_msg.data.dhcpv6)) != ANSC_STATUS_SUCCESS)
                     {
                         CcspTraceError(("[%s-%d] Failed to proccess DHCPv6 state change message \n", __FUNCTION__, __LINE__));
                     }
@@ -286,11 +280,6 @@ static void* IpcServerThread( void *arg )
         {
             CcspTraceError(("[%s-%d] message size unexpected\n", __FUNCTION__, __LINE__));
         }
-    }
-
-    if(pWanIpcCtrl != NULL)
-    {
-        free(pWanIpcCtrl);
     }
 
     pthread_exit(NULL);
@@ -314,7 +303,7 @@ static ANSC_STATUS IpcServerInit()
 }
 
 
-ANSC_STATUS WanMgr_StartIpcServer(INT interfaceIdx)
+ANSC_STATUS WanMgr_StartIpcServer()
 {
     pthread_t ipcThreadId;
     ANSC_STATUS retStatus = ANSC_STATUS_FAILURE;
@@ -326,15 +315,8 @@ ANSC_STATUS WanMgr_StartIpcServer(INT interfaceIdx)
         return -1;
     }
 
-    WanIpcCtrl_t* WanIpcCtrl = (WanIpcCtrl_t*) malloc(sizeof(WanIpcCtrl_t));
-    if(WanIpcCtrl != NULL)
-    {
-        //init variables
-        WanIpcCtrl->interfaceIdx = interfaceIdx;
-
-        //create thread
-        ret = pthread_create( &ipcThreadId, NULL, &IpcServerThread, (void*)WanIpcCtrl );
-    }
+    //create thread
+    ret = pthread_create( &ipcThreadId, NULL, &IpcServerThread, NULL );
 
     if( 0 != ret )
     {

@@ -19,7 +19,7 @@
 
 #include "wanmgr_platform_events.h"
 #include "wanmgr_sysevents.h"
-
+#include "platform_hal.h"
 
 
 ANSC_STATUS WanMgr_UpdatePlatformStatus(eWanMgrPlatformStatus platform_status)
@@ -27,6 +27,9 @@ ANSC_STATUS WanMgr_UpdatePlatformStatus(eWanMgrPlatformStatus platform_status)
     ANSC_STATUS retStatus = ANSC_STATUS_SUCCESS;
 
 #ifdef _HUB4_PRODUCT_REQ_
+
+    char region[BUFLEN_16] = {0};
+
     switch(platform_status)
     {
         case WANMGR_DISCONNECTED:
@@ -34,6 +37,32 @@ ANSC_STATUS WanMgr_UpdatePlatformStatus(eWanMgrPlatformStatus platform_status)
             break;
         case WANMGR_LINK_UP:
             wanmgr_sysevents_setWanLedState(LED_FLASHING_AMBER_STR);
+            break;
+        case WANMGR_LINK_V6UP_V4DOWN:
+	    if(platform_hal_GetRouterRegion(region) == RETURN_OK)
+            {
+                if(strncmp(region, "IT", sizeof(region)) == 0)
+                {
+                    wanmgr_sysevents_setWanLedState(LED_FLASHING_GREEN_STR);
+                }
+                else
+                {
+                    wanmgr_sysevents_setWanLedState(LED_SOLID_AMBER_STR);
+                }
+            }
+            break;
+	case WANMGR_LINK_V4UP_V6DOWN:
+	    if(platform_hal_GetRouterRegion(region) == RETURN_OK)
+            {
+                if(strncmp(region, "IT", sizeof(region)) == 0)
+                {
+                    wanmgr_sysevents_setWanLedState(LED_SOLID_AMBER_STR);
+                }
+                else
+                {
+                    wanmgr_sysevents_setWanLedState(LED_SOLID_GREEN_STR);
+                }
+            }
             break;
         case WANMGR_CONNECTING:
             wanmgr_sysevents_setWanLedState(LED_SOLID_AMBER_STR);

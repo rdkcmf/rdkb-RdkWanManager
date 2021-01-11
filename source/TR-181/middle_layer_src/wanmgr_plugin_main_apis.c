@@ -118,10 +118,9 @@ ANSC_HANDLE BackEndManagerCreate(VOID)
      * We create object by first allocating memory for holding the variables and member functions.
      */
     pMyObject = (WANMGR_BACKEND_OBJ*)AnscAllocateMemory(sizeof(WANMGR_BACKEND_OBJ));
-
-    if ( !pMyObject )
+    if ( pMyObject == NULL )
     {
-        return  (ANSC_HANDLE)NULL;
+        return (ANSC_HANDLE)NULL;
     }
 
     /*
@@ -179,6 +178,13 @@ ANSC_STATUS BackEndManagerInitialize(ANSC_HANDLE hThisObject)
     //Wan Manager Configuration
     WanMgr_WanConfigInit();
 
+    pMyObject->hDhcpv4        = (ANSC_HANDLE)WanMgr_Dhcpv4Create();
+    AnscTraceWarning(("  WanMgr_Dhcpv4Create done!\n"));
+
+    pMyObject->hDhcpv6        = (ANSC_HANDLE)WanMgr_Dhcpv6Create();
+    AnscTraceWarning(("  WanMgr_Dhcpv6Create done!\n"));
+
+
 
     return returnStatus;
 }
@@ -212,6 +218,15 @@ ANSC_STATUS BackEndManagerRemove(ANSC_HANDLE hThisObject)
     {
         AnscTraceError(("%s:%d:: Pointer is null!!\n", __FUNCTION__, __LINE__));
         return ANSC_STATUS_FAILURE;
+    }
+    if ( pMyObject->hDhcpv4 )
+    {
+        WanMgr_Dhcpv4Remove((ANSC_HANDLE)pMyObject->hDhcpv4);
+    }
+
+    if ( pMyObject->hDhcpv6 )
+    {
+        WanMgr_Dhcpv6Remove((ANSC_HANDLE)pMyObject->hDhcpv6);
     }
 
     /* Remove self */

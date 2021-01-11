@@ -87,5 +87,6 @@ ANSC_STATUS WanMgr_RdkBus_setWanPolicy(DML_WAN_POLICY wan_policy);
 ANSC_STATUS WanMgr_RdkBus_updateInterfaceUpstreamFlag(char *phyPath, BOOL flag);
 void* WanMgr_RdkBus_WanIfRefreshThread( void *arg );
 
+ANSC_STATUS DmlGetInstanceByKeywordFromPandM(char *ifname, int *piInstanceNumber);
 
 #endif /* _WANMGR_RDKBUS_UTILS_H_ */

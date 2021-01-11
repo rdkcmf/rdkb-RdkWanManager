@@ -67,6 +67,7 @@
 #define  COMPONENT_NAME_WANMANAGER                          "com.cisco.spvtg.ccsp.wanmanager"
 #define  COMPONENT_VERSION_WANMANAGER                        1
 #define  COMPONENT_PATH_WANMANAGER                           "/com/cisco/spvtg/ccsp/wanmanager"
+#define  WAN_COMPONENT_NAME                                  "eRT.com.cisco.spvtg.ccsp.wanmanager"
 
 #define  MESSAGE_BUS_CONFIG_FILE                            "msg_daemon.cfg"
 

@@ -35,6 +35,12 @@ ANSC_STATUS WanMgr_Core_Init(void)
         CcspTraceInfo(("%s %d - WanManager failed to initialise!\n", __FUNCTION__, __LINE__ ));
     }
 
+    //Starts the IPC thread
+    retStatus = WanMgr_StartIpcServer();
+    if(retStatus != ANSC_STATUS_SUCCESS)
+    {
+        CcspTraceInfo(("%s %d - IPC Thread failed to start!\n", __FUNCTION__, __LINE__ ));
+    }
 
     return retStatus;
 }

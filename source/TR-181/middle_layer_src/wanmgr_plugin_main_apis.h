@@ -115,19 +115,23 @@ extern COSARegisterCallBackAfterInitDmlProc  g_RegisterCallBackAfterInitDml;
 #define DATAMODEL_BASE_OID                  0
 #define DATAMODEL_CM_OID                    32
 #define DATAMODEL_RDKCENTRAL_CM_OID         42
+#define WAN_DHCPV6_DATA_OID                          25
+#define WAN_DHCPV4_DATA_OID                          2
 
 
 typedef  struct _WANMGR_BACKEND_OBJ_
 {
     BASE_CONTENT;
     PCOSA_PLUGIN_INFO hCosaPluginInfo;
-
+    ANSC_HANDLE hDhcpv6;
+    ANSC_HANDLE hDhcpv4;
 #ifdef _COSA_SIM_
     ULONG has_wifi_slap;
     ULONG has_moca_slap;
 #endif
 } WANMGR_BACKEND_OBJ;
 
+WANMGR_BACKEND_OBJ* g_pWanMgrBE;
 
 ANSC_HANDLE BackEndManagerCreate(VOID);
 ANSC_STATUS BackEndManagerInitialize(ANSC_HANDLE hThisObject);

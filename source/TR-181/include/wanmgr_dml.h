@@ -22,7 +22,12 @@
 
 #include "ipc_msg.h"
 
-#define DML_WAN_IFACE_PRIORITY_MAX          255
+#define PAM_COMPONENT_NAME          "eRT.com.cisco.spvtg.ccsp.pam"
+#define PAM_DBUS_PATH               "/com/cisco/spvtg/ccsp/pam"
+#define PAM_NOE_PARAM_NAME          "Device.IP.InterfaceNumberOfEntries"
+#define PAM_IF_TABLE_OBJECT         "Device.IP.Interface.%d."
+#define PAM_IF_PARAM_NAME           "Device.IP.Interface.%d.Name"
+#define DML_WAN_IFACE_PRIORITY_MAX  255
 
 typedef enum _DML_WAN_POLICY
 {
@@ -272,6 +277,8 @@ typedef struct _DML_WANIFACE_IP
     WANMGR_IPV6_DATA            Ipv6Data;
     ipc_dhcpv4_data_t*          pIpcIpv4Data;
     ipc_dhcpv6_data_t*          pIpcIpv6Data;
+    UINT                        Dhcp4cPid;
+    UINT                        Dhcp6cPid;
 } DML_WANIFACE_IP;
 
 

@@ -26,6 +26,7 @@
 #include "wanmgr_rdkbus_utils.h"
 #include "wanmgr_dhcpv4_apis.h"
 #include "wanmgr_rdkbus_apis.h"
+#include "wanmgr_ssp_internal.h"
 #include "ansc_platform.h"
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -43,6 +44,9 @@
  * it covers the range 127.x.x.x */
 #define LOOPBACK_RANGE "127"
 
+#define BASE_IFNAME_PPPoA "atm0"
+#define BASE_IFNAME_PPPoE "vlan101"
+#define DEFAULT_IFNAME    "erouter0"
 
 /** Macro to determine if a string parameter is empty or not */
 #define IS_EMPTY_STR(s)    ((s == NULL) || (*s == '\0'))
@@ -71,6 +75,7 @@ extern ANSC_HANDLE bus_handle;
 #define DUID_CLIENT "/tmp/dibbler/client-duid"
 #define DUID_TYPE "00:03:"  /* duid-type duid-ll 3 */
 #define HW_TYPE "00:01:"    /* hw type is always 1 */
+#define DIBBLER_IPV6_CLIENT_ENABLE      "Device.DHCPv6.Client.%d.Enable"
 
 /***************************************************************************
  * @brief API used to check the incoming nameserver is valid
@@ -119,7 +124,7 @@ static int ParsePrefixAddress(const char *prefixAddr, char *address, uint32_t *p
  * @return ANSC_STATUS_SUCCESS if the operation is successful
  * @return ANSC_STATUS_FAILURE if the operation is failure
  ****************************************************************************/
-static ANSC_STATUS setDibblerClientEnable(BOOL enable);
+static ANSC_STATUS setDibblerClientEnable(BOOL * enable);
 
 #ifdef _HUB4_PRODUCT_REQ_
 /***************************************************************************
@@ -142,6 +147,88 @@ static void* DmlHandlePPPCreateRequestThread( void *arg );
 static void generate_client_duid_conf();
 static void createDummyWanBridge();
 static void deleteDummyWanBridgeIfExist();
+
+static ANSC_STATUS SetDataModelParamValues( char *pComponent, char *pBus, char *pParamName, char *pParamVal, enum dataType_e type, BOOLEAN bCommit )
+{
+    CCSP_MESSAGE_BUS_INFO *bus_info              = (CCSP_MESSAGE_BUS_INFO *)bus_handle;
+    parameterValStruct_t   param_val[1]          = { 0 };
+    char                  *faultParam            = NULL;
+    int                    ret                   = 0;
+
+    //Copy Name
+    param_val[0].parameterName  = pParamName;
+    //Copy Value
+    param_val[0].parameterValue = pParamVal;
+
+    //Copy Type
+    param_val[0].type           = type;
+        ret = CcspBaseIf_setParameterValues(
+                                        bus_handle,
+                                        pComponent,
+                                        pBus,
+                                        0,
+                                        0,
+                                        param_val,
+                                        1,
+                                        bCommit,
+                                        &faultParam
+                                       );
+
+    if( ( ret != CCSP_SUCCESS ) && ( faultParam != NULL ) )
+    {
+        CcspTraceError(("%s-%d Failed to set %s\n",__FUNCTION__,__LINE__,pParamName));
+        bus_info->freefunc( faultParam );
+        return ANSC_STATUS_FAILURE;
+    }
+
+    return ANSC_STATUS_SUCCESS;
+}
+
+
+static ANSC_STATUS setDibblerClientEnable(BOOL *enable)
+{
+    INT              index               = 0;
+    pthread_t        dibblerThreadId;
+    INT              iErrorCode          = -1;
+
+    iErrorCode = pthread_create( &dibblerThreadId, NULL, &Dhcpv6HandlingThread, (void*)enable );
+    if( 0 != iErrorCode )
+    {
+        CcspTraceInfo(("%s %d - Dhcpv6HandlingThread thread failed. EC:%d\n", __FUNCTION__, __LINE__, iErrorCode ));
+        return ANSC_STATUS_FAILURE;
+    }
+
+    return ANSC_STATUS_SUCCESS;
+}
+
+static void* Dhcpv6HandlingThread( void *arg )
+{
+    char ParamName[BUFLEN_256] = {0};
+    char ParamValue[BUFLEN_256] = {0};
+
+    //detach thread from caller stack
+    pthread_detach(pthread_self());
+
+    BOOL *enable_client = (BOOL *) arg;
+
+    if( NULL == enable_client )
+    {
+        CcspTraceError(("%s Invalid Memory\n", __FUNCTION__));
+        pthread_exit(NULL);
+    }
+
+    snprintf( ParamName, BUFLEN_256, DIBBLER_IPV6_CLIENT_ENABLE, 1 );
+    if(*enable_client)
+        snprintf( ParamValue, BUFLEN_256, "%s", "true");
+    else
+        snprintf( ParamValue, BUFLEN_256, "%s", "false");
+
+    SetDataModelParamValues( WAN_COMPONENT_NAME, COMPONENT_PATH_WANMANAGER, ParamName, ParamValue, ccsp_boolean, TRUE );
+
+    CcspTraceInfo(("%s %d Successfully set %d value to %s data model \n", __FUNCTION__, __LINE__, *enable_client, ParamName));
+
+    pthread_exit(NULL);
+}
 
 
 int WanManager_Ipv6AddrUtil(char *ifname, Ipv6OperType opr, int preflft, int vallft)
@@ -200,11 +287,21 @@ int WanManager_Ipv6AddrUtil(char *ifname, Ipv6OperType opr, int preflft, int val
 ANSC_STATUS WanManager_StartDhcpv6Client(const char *pcInterfaceName, BOOL isPPP)
 {
     char cmdLine[BUFLEN_128];
+    bool enableClient = TRUE;
 
     CcspTraceInfo(("Enter WanManager_StartDhcpv6Client for  %s \n", DHCPV6_CLIENT_NAME));
     sprintf(cmdLine, "%s start", DHCPV6_CLIENT_NAME);
     system(cmdLine);
     CcspTraceInfo(("Started %s \n", cmdLine ));
+    if(setDibblerClientEnable(&enableClient) == ANSC_STATUS_SUCCESS)
+    {
+        CcspTraceInfo(("setDibblerClientEnable is successful \n"));
+    }
+    else
+    {
+        CcspTraceInfo(("setDibblerClientEnable is failure \n"));
+    }
+
     return ANSC_STATUS_SUCCESS;
 }
 
@@ -284,6 +381,30 @@ ANSC_STATUS WanManager_StopDhcpv4Client(BOOL sendReleaseAndExit)
     return ret;
 }
 
+void WanUpdateDhcp6cProcessId(char *currentBaseIfName)
+{
+    INT           wanIndex = -1;
+    int processId = 0;
+    char cmdLine[BUFLEN_128];
+    char out[BUFLEN_128] = {0};
+
+    sprintf(cmdLine, "pidof %s", DHCPV6_CLIENT_NAME);
+    _get_shell_output(cmdLine, out, sizeof(out));
+    CcspTraceError(("%s Updating dibbler client pid %s\n", __func__, out));
+    processId = atoi(out);
+
+    WanMgr_Iface_Data_t* pWanDmlIfaceData = WanMgr_GetIfaceDataByName_locked(currentBaseIfName);
+    if (pWanDmlIfaceData != NULL)
+    {
+        pWanDmlIfaceData->data.IP.Dhcp6cPid = processId;		
+        WanMgrDml_GetIfaceData_release(pWanDmlIfaceData);
+    }
+    else
+    {
+        CcspTraceError(("%s Failed to get index for %s\n", __FUNCTION__, currentBaseIfName));
+        return;
+    }
+}
 
 #ifdef FEATURE_MAPT
 const char *nat44PostRoutingTable = "OUTBOUND_POSTROUTING";
@@ -1271,13 +1392,33 @@ ANSC_STATUS WanManager_CreatePPPSession(DML_WAN_IFACE* pInterface)
 {
     pthread_t pppThreadId;
     INT iErrorCode;
+    char wan_iface_name[10] = {0};
 
+    syscfg_init();
     /* Generate client-duid file for dibbler */
     generate_client_duid_conf();
 
     /* Remove erouter0 dummy wan bridge if exists */
     deleteDummyWanBridgeIfExist();
-
+    if (pInterface->PPP.LinkType == WAN_IFACE_PPP_LINK_TYPE_PPPoA)
+    {
+        strncpy(wan_iface_name, BASE_IFNAME_PPPoA, strlen(BASE_IFNAME_PPPoA));
+    }
+    else if (pInterface->PPP.LinkType == WAN_IFACE_PPP_LINK_TYPE_PPPoE)
+    {
+        strncpy(wan_iface_name, BASE_IFNAME_PPPoE, strlen(BASE_IFNAME_PPPoE));
+    }
+    else
+    {
+        strncpy(wan_iface_name, DEFAULT_IFNAME, strlen(DEFAULT_IFNAME));
+    }    
+    if (syscfg_set(NULL, SYSCFG_WAN_INTERFACE_NAME, wan_iface_name) != 0)
+    {
+        CcspTraceError(("%s %d - syscfg_set failed to set Interafce=%s \n", __FUNCTION__, __LINE__, wan_iface_name ));
+    }else{
+        CcspTraceInfo(("%s %d - syscfg_set successfully to set Interafce=%s \n", __FUNCTION__, __LINE__, wan_iface_name ));
+    }
+    syscfg_commit();
     iErrorCode = pthread_create( &pppThreadId, NULL, &DmlHandlePPPCreateRequestThread, (void*)pInterface );
     if( 0 != iErrorCode )
     {
@@ -1430,7 +1571,7 @@ ANSC_STATUS WanManager_DeletePPPSession(DML_WAN_IFACE* pInterface)
         CcspTraceError(("%s Invalid Memory\n", __FUNCTION__));
         return ANSC_STATUS_FAILURE;
     }
-
+    syscfg_init();
     memset( acSetParamName, 0, DATAMODEL_PARAM_LENGTH );
     memset( acSetParamValue, 0, DATAMODEL_PARAM_LENGTH );
 
@@ -1445,7 +1586,6 @@ ANSC_STATUS WanManager_DeletePPPSession(DML_WAN_IFACE* pInterface)
     snprintf( acSetParamName, DATAMODEL_PARAM_LENGTH, PPP_INTERFACE_ENABLE, iPPPInstance );
     snprintf( acSetParamValue, DATAMODEL_PARAM_LENGTH, "%s", "false" );
     WanMgr_RdkBus_SetParamValues( PPPMGR_COMPONENT_NAME, PPPMGR_DBUS_PATH, acSetParamName, acSetParamValue, ccsp_boolean, TRUE );
-    pInterface->PPP.Enable = false;
 
     //Delete PPP Instance
     snprintf( acSetParamName, DATAMODEL_PARAM_LENGTH, PPP_INTERFACE_TABLE, iPPPInstance );
@@ -1465,6 +1605,13 @@ ANSC_STATUS WanManager_DeletePPPSession(DML_WAN_IFACE* pInterface)
     sleep(2);
 
     /* Create a dummy wan bridge */
+    if (syscfg_set(NULL, SYSCFG_WAN_INTERFACE_NAME, DEFAULT_IFNAME) != 0)
+    {
+        CcspTraceError(("%s %d - syscfg_set failed to set Interafce=%s \n", __FUNCTION__, __LINE__, DEFAULT_IFNAME ));
+    }else{
+        CcspTraceInfo(("%s %d - syscfg_set successfully to set Interafce=%s \n", __FUNCTION__, __LINE__, DEFAULT_IFNAME ));
+    }
+    syscfg_commit();    
     createDummyWanBridge();
 
     return ANSC_STATUS_SUCCESS;
