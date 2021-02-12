@@ -39,6 +39,7 @@
 #define PPP_INTERFACE_PASSWORD       "Device.PPP.Interface.%d.Password"
 #define PPP_INTERFACE_IPCP_ENABLE    "Device.PPP.Interface.%d.IPCPEnable"
 #define PPP_INTERFACE_IPV6CP_ENABLE  "Device.PPP.Interface.%d.IPv6CPEnable"
+#define PPP_INTERFACE_LINKTYPE       "Device.PPP.Interface.%d.X_RDK_LinkType"
 #define PPP_IPCP_LOCAL_IPADDRESS     "Device.PPP.Interface.%d.IPCP.LocalIPAddress"
 #define PPP_IPCP_REMOTEIPADDRESS     "Device.PPP.Interface.%d.IPCP.RemoteIPAddress"
 #define PPP_IPCP_DNS_SERVERS         "Device.PPP.Interface.%d.IPCP.DNSServers"

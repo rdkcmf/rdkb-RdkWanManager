@@ -1384,6 +1384,17 @@ static void* DmlHandlePPPCreateRequestThread( void *arg )
     }
     WanMgr_RdkBus_SetParamValues( PPPMGR_COMPONENT_NAME, PPPMGR_DBUS_PATH, acSetParamName, acSetParamValue, ccsp_boolean, TRUE );
 
+    //Set LinkType
+    snprintf( acSetParamName, DATAMODEL_PARAM_LENGTH, PPP_INTERFACE_LINKTYPE, iPPPInstance );
+    if (pInterface->PPP.LinkType == WAN_IFACE_PPP_LINK_TYPE_PPPoA)
+    {
+        snprintf( acSetParamValue, DATAMODEL_PARAM_LENGTH, "%s", "PPPoA" );
+    }
+    else if (pInterface->PPP.LinkType == WAN_IFACE_PPP_LINK_TYPE_PPPoE)
+    {
+        snprintf( acSetParamValue, DATAMODEL_PARAM_LENGTH, "%s", "PPPoE" );
+    }
+    WanMgr_RdkBus_SetParamValues( PPPMGR_COMPONENT_NAME, PPPMGR_DBUS_PATH, acSetParamName, acSetParamValue, ccsp_string, TRUE );
     //Set PPP Enable
     snprintf( acSetParamName, DATAMODEL_PARAM_LENGTH, PPP_INTERFACE_ENABLE, iPPPInstance );
     if (pInterface->PPP.Enable == TRUE)
