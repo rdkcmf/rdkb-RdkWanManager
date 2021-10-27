@@ -327,20 +327,6 @@ static int write_Wan_Interface_ParametersFromPSM(ULONG instancenum, DML_WAN_IFAC
 
     memset(param_value, 0, sizeof(param_value));
     memset(param_name, 0, sizeof(param_name));
-
-    if(p_Interface->Wan.ActiveLink)
-    {
-        _ansc_sprintf(param_value, PSM_ENABLE_STRING_TRUE);
-    }
-    else
-    {
-        _ansc_sprintf(param_value, PSM_ENABLE_STRING_FALSE);
-    }
-    _ansc_sprintf(param_name, PSM_WANMANAGER_IF_ACTIVELINK, instancenum);
-    WanMgr_RdkBus_SetParamValuesToDB(param_name,param_value);
-    
-    memset(param_value, 0, sizeof(param_value));
-    memset(param_name, 0, sizeof(param_name));
     _ansc_sprintf(param_value, "%d", p_Interface->Wan.Type );
     _ansc_sprintf(param_name, PSM_WANMANAGER_IF_TYPE, instancenum);
     WanMgr_RdkBus_SetParamValuesToDB(param_name,param_value);
@@ -1353,7 +1339,7 @@ PCONTEXT_LINK_OBJECT SListGetEntryByInsNum( PSLIST_HEADER pListHead, ULONG Insta
     return NULL;
 }
 
-ANSC_STATUS DmlSetWanActiveLinkInPSMDB( ULONG instancenum, DML_WAN_IFACE* p_Interface )
+ANSC_STATUS DmlSetWanActiveLinkInPSMDB( UINT uiInterfaceIdx , bool storeValue )
 {
     int retPsmSet = CCSP_SUCCESS;
     char param_name[256] = {0};
@@ -1362,7 +1348,7 @@ ANSC_STATUS DmlSetWanActiveLinkInPSMDB( ULONG instancenum, DML_WAN_IFACE* p_Inte
     memset(param_value, 0, sizeof(param_value));
     memset(param_name, 0, sizeof(param_name));
 
-    if(p_Interface->Wan.ActiveLink)
+    if(storeValue == TRUE)
     {
         _ansc_sprintf(param_value, PSM_ENABLE_STRING_TRUE);
     }
@@ -1370,8 +1356,13 @@ ANSC_STATUS DmlSetWanActiveLinkInPSMDB( ULONG instancenum, DML_WAN_IFACE* p_Inte
     {
         _ansc_sprintf(param_value, PSM_ENABLE_STRING_FALSE);
     }
-    _ansc_sprintf(param_name, PSM_WANMANAGER_IF_ACTIVELINK, (instancenum+1));
-    WanMgr_RdkBus_SetParamValuesToDB(param_name,param_value);
+    _ansc_sprintf(param_name, PSM_WANMANAGER_IF_ACTIVELINK, (uiInterfaceIdx + 1));
+    CcspTraceInfo(("%s %d: setting %s = %s\n", __FUNCTION__, __LINE__, param_name, param_value));
+    if (WanMgr_RdkBus_SetParamValuesToDB(param_name,param_value) != CCSP_SUCCESS)
+    {
+        CcspTraceError(("%s %d: setting %s = %s in PSM failed\n", __FUNCTION__, __LINE__, param_name, param_value));
+        return ANSC_STATUS_FAILURE;
+    }
 
     return ANSC_STATUS_SUCCESS;
 }
