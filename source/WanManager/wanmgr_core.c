@@ -25,6 +25,8 @@
 #include "wanmgr_ipc.h"
 #include "wanmgr_controller.h"
 
+//ToDo: Remove Comments, while working on Interface State Machine.
+#if 0
 ANSC_STATUS WanMgr_Core_Init(void)
 {
     ANSC_STATUS retStatus = ANSC_STATUS_SUCCESS;
@@ -52,6 +54,7 @@ ANSC_STATUS WanMgr_Core_Init(void)
     return retStatus;
 }
 
+#endif
 ANSC_STATUS WanMgr_Core_Start(void)
 {
     ANSC_STATUS retStatus = ANSC_STATUS_SUCCESS;
@@ -62,6 +65,8 @@ ANSC_STATUS WanMgr_Core_Start(void)
     return retStatus;
 }
 
+//ToDo: Remove Comment while wokring on Interface State Machine.
+#if 0
 ANSC_STATUS WanMgr_Core_Finalise(void)
 {
     ANSC_STATUS retStatus = ANSC_STATUS_SUCCESS;
@@ -70,3 +75,4 @@ ANSC_STATUS WanMgr_Core_Finalise(void)
 
     return retStatus;
 }
+#endif

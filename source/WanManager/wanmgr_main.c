@@ -361,7 +361,8 @@ int main(int argc, char* argv[])
 
 
     //CORE INT
-    WanMgr_Core_Init();
+    //ToDo: Remove Comment, while working on Interface State Machine.
+    //WanMgr_Core_Init();
 
     if ( bRunAsDaemon )
     {
@@ -381,7 +382,8 @@ int main(int argc, char* argv[])
 #endif
 
     //CORE FINALISE
-    WanMgr_Core_Finalise();
+    //ToDo: Remove Comments ,While working on Interface State Machine.
+    //WanMgr_Core_Finalise();
 
     err = Cdm_Term();
     if (err != CCSP_SUCCESS)

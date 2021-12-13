@@ -27,7 +27,29 @@
 #define PSM_WANMANAGER_WANMODE                              "dmsb.wanmanager.wanmode"
 #define PSM_WANMANAGER_WANPOLICY                            "dmsb.wanmanager.wanpolicy"
 #define PSM_WANMANAGER_WANIFCOUNT                           "dmsb.wanmanager.wanifcount"
-#define PSM_WANMANAGER_WANIDLETIMEOUT                       "dmsb.wanmanager.wanidletimeout"
+
+//define FEATURE_RDKB_WAN_MULTI_VLAN 1
+
+#ifdef FEATURE_RDKB_WAN_MULTI_VLAN
+
+#define PSM_WANMANAGER_IF_NAME                            "dmsb.wanmanager.if.%d.Name"
+#define PSM_WANMANAGER_IF_SEL_ENABLE                      "dmsb.wanmanager.if.%d.Selection.Enable"
+#define PSM_WANMANAGER_IF_SEL_STATUS                      "dmsb.wanmanager.if.%d.Selection.Status"
+#define PSM_WANMANAGER_IF_ACTIVELINK                      "dmsb.wanmanager.if.%d.Selection.ActiveLink"
+#define PSM_WANMANAGER_IF_SEL_PRIORITY                    "dmsb.wanmanager.if.%d.Selection.Priority"
+#define PSM_WANMANAGER_IF_SEL_TIMEOUT                     "dmsb.wanmanager.if.%d.Selection.TimeOut"
+#define PSM_WANMANAGER_IF_VIRTIF_ENABLE                   "dmsb.wanmanager.if.%d.VirtualInterface.%d.Enable"
+#define PSM_WANMANAGER_IF_VIRTIF_NAME                     "dmsb.wanmanager.if.%d.VirtualInterface.%d.Name"
+#define PSM_WANMANAGER_IF_VIRTIF_ALIAS                    "dmsb.wanmanager.if.%d.VirtualInterface.%d.Alias"
+#define PSM_WANMANAGER_IF_VIRTIF_TIMEOUT                  "dmsb.wanmanager.if.%d.VirtualInterface.%d.TimeOut"
+#define PSM_WANMANAGER_IF_VIRTIF_WANPROTOCOL              "dmsb.wanmanager.if.%d.VirtualInterface.%d.WanProtocol"
+#define PSM_WANMANAGER_IF_XRDK_IPV4_ENABLE                "dmsb.wanmanager.if.%d.VirtualInterface.%d.X_RDK_IPv4.Enable"
+#define PSM_WANMANAGER_IF_XRDK_IPV4_ADDRTYPE              "dmsb.wanmanager.if.%d.VirtualInterface.%d.X_RDK_IPv4.AddressType"
+#define PSM_WANMANAGER_IF_XRDK_IPV6_ENABLE                "dmsb.wanmanager.if.%d.VirtualInterface.%d.X_RDK_IPv6.Enable"
+#define PSM_WANMANAGER_IF_XRDK_IPV6_ADDRTYPE              "dmsb.wanmanager.if.%d.VirtualInterface.%d.X_RDK_IPv6.AddressType"
+
+#else
+
 #define PSM_WANMANAGER_IF_ENABLE                            "dmsb.wanmanager.if.%d.Enable"
 #define PSM_WANMANAGER_IF_ACTIVELINK                        "dmsb.wanmanager.if.%d.ActiveLink"
 #define PSM_WANMANAGER_IF_NAME                              "dmsb.wanmanager.if.%d.Name"
@@ -35,22 +57,17 @@
 #define PSM_WANMANAGER_IF_TYPE                              "dmsb.wanmanager.if.%d.Type"
 #define PSM_WANMANAGER_IF_PRIORITY                          "dmsb.wanmanager.if.%d.Priority"
 #define PSM_WANMANAGER_IF_SELECTIONTIMEOUT                  "dmsb.wanmanager.if.%d.SelectionTimeout"
-#define PSM_WANMANAGER_IF_DYNTRIGGERENABLE                  "dmsb.wanmanager.if.%d.DynTriggerEnable"
-#define PSM_WANMANAGER_IF_DYNTRIGGERDELAY                   "dmsb.wanmanager.if.%d.DynTriggerDelay"
 #define PSM_WANMANAGER_IF_WAN_ENABLE_MAPT                   "dmsb.wanmanager.if.%d.EnableMAPT"
 #define PSM_WANMANAGER_IF_WAN_ENABLE_DSLITE                 "dmsb.wanmanager.if.%d.EnableDSLite"
 #define PSM_WANMANAGER_IF_WAN_ENABLE_IPOE                   "dmsb.wanmanager.if.%d.EnableIPoE"
 #define PSM_WANMANAGER_IF_WAN_REBOOTONCONFIGURATION         "dmsb.wanmanager.if.%d.RebootOnConfiguration"
-#define PSM_WANMANAGER_IF_WAN_VALIDATION_DISCOVERY_OFFER    "dmsb.wanmanager.if.%d.Validation.DiscoveryOffer"
-#define PSM_WANMANAGER_IF_WAN_VALIDATION_SOLICIT_ADVERTISE  "dmsb.wanmanager.if.%d.Validation.SolicitAdvertise"
-#define PSM_WANMANAGER_IF_WAN_VALIDATION_RS_RA              "dmsb.wanmanager.if.%d.Validation.RsRa"
-#define PSM_WANMANAGER_IF_WAN_VALIDATION_PADI_PADO          "dmsb.wanmanager.if.%d.Validation.PadiPado"
 #define PSM_WANMANAGER_IF_WAN_PPP_ENABLE                    "dmsb.wanmanager.if.%d.PPPEnable"
 #define PSM_WANMANAGER_IF_WAN_PPP_LINKTYPE                  "dmsb.wanmanager.if.%d.PPPLinkType"
 #define PSM_WANMANAGER_IF_WAN_PPP_IPCP_ENABLE               "dmsb.wanmanager.if.%d.PPPIPCPEnable"
 #define PSM_WANMANAGER_IF_WAN_PPP_IPV6CP_ENABLE             "dmsb.wanmanager.if.%d.PPPIPV6CPEnable"
 #define PSM_SELFHEAL_REBOOT_STATUS                          "dmsb.selfheal.rebootstatus"
 
+#endif
 /**********************************************************************
                        Interface.{i}.Marking.{i}.
 **********************************************************************/

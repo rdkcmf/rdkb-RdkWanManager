@@ -17,6 +17,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
+<?ifndef FEATURE_RDKB_WAN_MULTI_VLAN?>
 <dataModelInfo>
     <version>1</version>
     <moduleName>TR181_RdkWanManager</moduleName>
@@ -54,14 +55,12 @@
                     <name>Policy</name>
                     <type>string: FIXED_MODE_ON_BOOTUP(1),FIXED_MODE(2),PRIMARY_PRIORITY_ON_BOOTUP(3),PRIMARY_PRIORITY(4),MULTIWAN_MODE(5),AUTOWAN_MODE(6)</type>
                     <syntax>uint32/mapped</syntax>
+<?ifdef WANMGR_POLICY_TR181_READONLY?>
+                        <writable>false</writable>
+<?else?>
                     <writable>true</writable>
+<?endif?>
                 </parameter>
-                <parameter>
-                    <name>IdleTimeout</name>
-                    <type>unsignedInt</type>
-                    <syntax>uint32</syntax>
-                    <writable>true</writable>
-	        </parameter>
                 <parameter>
                     <name>ResetActiveInterface</name>
                     <type>boolean</type>
@@ -251,72 +250,6 @@
                                     <name>LinkStatus</name>
                                     <type>string: Down(1),Configuring(2),Up(3)</type>
                                     <syntax>uint32/mapped</syntax>
-                                    <writable>true</writable>
-                                </parameter>
-                            </parameters>
-                            <objects>
-                                <object>
-                                    <name>Validation</name>
-                                    <objectType>object</objectType>
-                                    <functions>
-                                        <func_GetParamBoolValue>WanIfValidation_GetParamBoolValue</func_GetParamBoolValue>
-                                        <func_SetParamBoolValue>WanIfValidation_SetParamBoolValue</func_SetParamBoolValue>
-                                        <func_Validate>WanIfValidation_Validate</func_Validate>
-                                        <func_Commit>WanIfValidation_Commit</func_Commit>
-                                        <func_Rollback>WanIfValidation_Rollback</func_Rollback>
-                                    </functions>
-                                    <parameters>
-                                        <parameter>
-                                            <name>Discovery-Offer</name>
-                                            <type>boolean</type>
-                                            <syntax>bool</syntax>
-                                            <writable>true</writable>
-                                        </parameter>
-                                        <parameter>
-                                            <name>Solicit-Advertise</name>
-                                            <type>boolean</type>
-                                            <syntax>bool</syntax>
-                                            <writable>true</writable>
-                                        </parameter>
-                                        <parameter>
-                                            <name>RS-RA</name>
-                                            <type>boolean</type>
-                                            <syntax>bool</syntax>
-                                            <writable>true</writable>
-                                        </parameter>
-                                        <parameter>
-                                            <name>PADI-PADO</name>
-                                            <type>boolean</type>
-                                            <syntax>bool</syntax>
-                                            <writable>true</writable>
-                                        </parameter>
-                                    </parameters>
-                                </object>
-                            </objects>
-                        </object>
-                        <object>
-                            <name>DynamicTrigger</name>
-                            <objectType>object</objectType>
-                            <functions>
-                                <func_GetParamUlongValue>WanIfDynTrigger_GetParamUlongValue</func_GetParamUlongValue>
-                                <func_SetParamUlongValue>WanIfDynTrigger_SetParamUlongValue</func_SetParamUlongValue>
-                                <func_GetParamBoolValue>WanIfDynTrigger_GetParamBoolValue</func_GetParamBoolValue>
-                                <func_SetParamBoolValue>WanIfDynTrigger_SetParamBoolValue</func_SetParamBoolValue>
-                                <func_Validate>WanIfDynTrigger_Validate</func_Validate>
-                                <func_Commit>WanIfDynTrigger_Commit</func_Commit>
-                                <func_Rollback>WanIfDynTrigger_Rollback</func_Rollback>
-                            </functions>
-                            <parameters>
-                                <parameter>
-                                    <name>Enable</name>
-                                    <type>boolean</type>
-                                    <syntax>bool</syntax>
-                                    <writable>true</writable>
-                                </parameter>
-                                <parameter>
-                                    <name>Delay</name>
-                                    <type>unsignedInt</type>
-                                    <syntax>uint32</syntax>
                                     <writable>true</writable>
                                 </parameter>
                             </parameters>
@@ -1284,6 +1217,12 @@
                 <syntax>bool</syntax>
                 <writable>false</writable>
               </parameter>
+              <parameter>
+                <name>MapIpv4Address</name>
+                <type>string</type>
+                <syntax>string</syntax>
+                <writable>false</writable>
+              </parameter>
               </parameters>
             </object>
           </objects>
@@ -1292,3 +1231,438 @@
     </object>
     </objects>
 </dataModelInfo>
+
+<?else?>
+
+<dataModelInfo>
+    <version>1</version>
+    <moduleName>TR181_RdkWanManager</moduleName>
+    <author></author>
+    <description></description>
+    <library />
+    <objects>
+        <object>
+            <name>X_RDK_WanManager</name>
+            <objectType>object</objectType>
+            <functions>
+                <func_GetParamUlongValue>WanManager_GetParamUlongValue</func_GetParamUlongValue>
+                <func_SetParamUlongValue>WanManager_SetParamUlongValue</func_SetParamUlongValue>
+                <func_GetParamStringValue>WanManager_GetParamStringValue</func_GetParamStringValue>
+                <func_SetParamStringValue>WanManager_SetParamStringValue</func_SetParamStringValue>
+                <func_GetParamBoolValue>WanManager_GetParamBoolValue</func_GetParamBoolValue>
+                <func_SetParamBoolValue>WanManager_SetParamBoolValue</func_SetParamBoolValue>
+                <func_Validate>WanManager_Validate</func_Validate>
+                <func_Commit>WanManager_Commit</func_Commit>
+            </functions>
+            <parameters>
+                <parameter>
+                    <name>Enable</name>
+                    <type>boolean</type>
+                    <syntax>bool</syntax>
+                    <writable>true</writable>
+                </parameter>
+                <parameter>
+                  <name>Data</name>
+                  <type>string</type>
+                  <syntax>string</syntax>
+                  <writable>true</writable>
+                </parameter>
+                <parameter>
+                    <name>Policy</name>
+                    <type>string: FIXED_MODE_ON_BOOTUP(1),FIXED_MODE(2),PRIMARY_PRIORITY_ON_BOOTUP(3),PRIMARY_PRIORITY(4),MULTIWAN_MODE(5),AUTOWAN_MODE(6)</type>
+                    <syntax>uint32/mapped</syntax>
+<?ifdef WANMGR_POLICY_TR181_READONLY?>
+                        <writable>false</writable>
+<?else?>
+                    <writable>true</writable>
+<?endif?>
+                </parameter>
+                <parameter>
+                    <name>ResetActiveInterface</name>
+                    <type>boolean</type>
+                    <syntax>bool</syntax>
+                    <writable>true</writable>
+                </parameter>
+            </parameters>
+            <objects>
+                <object>
+                    <name>CPEInterface</name>
+                    <objectType>staticTable</objectType>
+                    <maxInstance>128</maxInstance>
+                    <functions>
+                        <func_GetEntryCount>WanIf_GetEntryCount</func_GetEntryCount>
+			<func_GetEntry>WanIf_GetEntry</func_GetEntry>
+                        <func_GetParamUlongValue>WanIf_GetParamUlongValue</func_GetParamUlongValue>
+                        <func_SetParamUlongValue>WanIf_SetParamUlongValue</func_SetParamUlongValue>
+                        <func_GetParamStringValue>WanIf_GetParamStringValue</func_GetParamStringValue>
+                        <func_SetParamStringValue>WanIf_SetParamStringValue</func_SetParamStringValue>
+                        <func_GetParamBoolValue>WanIf_GetParamBoolValue</func_GetParamBoolValue>
+                        <func_SetParamBoolValue>WanIf_SetParamBoolValue</func_SetParamBoolValue>
+                        <func_Validate>WanIf_Validate</func_Validate>
+                        <func_Commit>WanIf_Commit</func_Commit>
+                        <func_Rollback>WanIf_Rollback</func_Rollback>
+                    </functions>
+                    <parameters>
+                        <parameter>
+                            <name>Name</name>
+                            <type>string</type>
+                            <syntax>string</syntax>
+                            <writable>true</writable>
+                        </parameter>
+                        <parameter>
+                            <name>BaseInterface</name>
+                            <type>string</type>
+                            <syntax>string</syntax>
+                            <writable>true</writable>
+                        </parameter>
+                        <parameter>
+                            <name>Status</name>
+                            <type>string: Disabled(1),Initialising(2),Validating(3),Up(4),Invalid(5)</type>
+                            <syntax>uint32/mapped</syntax>
+                            <writable>true</writable>
+                        </parameter>
+                        <parameter>
+                            <name>LinkStatus</name>
+                            <type>string: Down(1),Configuring(2),Up(3)</type>
+                            <syntax>uint32/mapped</syntax>
+                            <writable>true</writable>
+                        </parameter>
+                    </parameters>
+                  <objects>
+                    <object>
+                        <name>Selection</name>
+                        <objectType>object</objectType>
+                        <functions>
+                            <func_GetParamUlongValue>WanIfSelection_GetParamUlongValue</func_GetParamUlongValue>
+                            <func_SetParamUlongValue>WanIfSelection_SetParamUlongValue</func_SetParamUlongValue>
+                            <func_GetParamIntValue>WanIfSelection_GetParamIntValue</func_GetParamIntValue>
+                            <func_SetParamIntValue>WanIfSelection_SetParamIntValue</func_SetParamIntValue>
+                            <func_GetParamBoolValue>WanIfSelection_GetParamBoolValue</func_GetParamBoolValue>
+                            <func_SetParamBoolValue>WanIfSelection_SetParamBoolValue</func_SetParamBoolValue>
+                            <func_Validate>WanIfSelection_Validate</func_Validate>
+                            <func_Commit>WanIfSelection_Commit</func_Commit>
+                            <func_Rollback>WanIfSelection_Rollback</func_Rollback>
+                        </functions>
+                        <parameters>
+                            <parameter>
+                                <name>Enable</name>
+                                <type>boolean</type>
+                                <syntax>bool</syntax>
+                                <writable>true</writable>
+                            </parameter>
+                            <parameter>
+                                <name>Priority</name>
+                                <type>int</type>
+                                <syntax>int</syntax>
+                                <writable>true</writable>
+                            </parameter>
+                            <parameter>
+                                <name>TimeOut</name>
+                                <type>int</type>
+                                <syntax>int</syntax>
+                                <writable>true</writable>
+                            </parameter>
+                            <parameter>
+                                <name>RequireReboot</name>
+                                <type>boolean</type>
+                                <syntax>bool</syntax>
+                                <writable>true</writable>
+                            </parameter>
+                            <parameter>
+                                <name>Status</name>
+                                <type>string: NotSelected(1),Standby(2),Active(3)</type>
+                                <syntax>uint32/mapped</syntax>
+                                <writable>true</writable>
+                            </parameter>
+                            <parameter>
+                                <name>ActiveLink</name>
+                                <type>boolean</type>
+                                <syntax>bool</syntax>
+                                <writable>true</writable>
+                            </parameter>
+                        </parameters>
+                    </object>
+                        <object>
+                            <name>VirtualInterface</name>
+                            <objectType>writableTable</objectType>
+                            <maxInstance>128</maxInstance>
+                            <functions>
+                                <func_GetEntryCount>WanIfVirtIf_GetEntryCount</func_GetEntryCount>
+                                <func_GetEntry>WanIfVirtIf_GetEntry</func_GetEntry>
+                                <func_AddEntry>WanIfVirtIf_AddEntry</func_AddEntry>
+                                <func_DelEntry>WanIfVirtIf_DelEntry</func_DelEntry>
+                                <func_GetParamUlongValue>WanIfVirtIf_GetParamUlongValue</func_GetParamUlongValue>
+                                <func_SetParamUlongValue>WanIfVirtIf_SetParamUlongValue</func_SetParamUlongValue>
+                                <func_GetParamBoolValue>WanIfVirtIf_GetParamBoolValue</func_GetParamBoolValue>
+                                <func_SetParamBoolValue>WanIfVirtIf_SetParamBoolValue</func_SetParamBoolValue>
+                                <func_GetParamStringValue>WanIfVirtIf_GetParamStringValue</func_GetParamStringValue>
+                                <func_SetParamStringValue>WanIfVirtIf_SetParamStringValue</func_SetParamStringValue>
+                                <func_Validate>WanIfVirtIf_Validate</func_Validate>
+                                <func_Commit>WanIfVirtIf_Commit</func_Commit>
+                                <func_Rollback>WanIfVirtIf_Rollback</func_Rollback>
+                            </functions>
+                            <parameters>
+                                <parameter>
+                                    <name>Enable</name>
+                                    <type>boolean</type>
+                                    <syntax>bool</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                                <parameter>
+                                    <name>Name</name>
+                                    <type>string</type>
+                                    <syntax>string</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                                <parameter>
+                                    <name>Status</name>
+                                    <type>string: Disabled(1),Initialising(2),Validating(3),Up(4),Invalid(5)</type>
+                                    <syntax>uint32/mapped</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                                <parameter>
+                                    <name>Alias</name>
+                                    <type>string</type>
+                                    <syntax>string</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                                <parameter>
+                                    <name>TimeOut</name>
+                                    <type>unsignedInt</type>
+                                    <syntax>uint32</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                                <parameter>
+                                    <name>WanProtocol</name>
+                                    <type>string: Unknown(0),DHCP(1),PPP(2)</type>
+                                    <syntax>uint32/mapped</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                                <parameter>
+                                    <name>Refresh</name>
+                                    <type>boolean</type>
+                                    <syntax>bool</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                                <parameter>
+                                    <name>IPInterface</name>
+                                    <type>string</type>
+                                    <syntax>string</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                                <parameter>
+                                    <name>PPPInterface</name>
+                                    <type>string</type>
+                                    <syntax>string</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                                <parameter>
+                                    <name>VLANInUse</name>
+                                    <type>boolean</type>
+                                    <syntax>bool</syntax>
+                                    <writable>true</writable>
+                                </parameter>
+                            </parameters>
+                            <objects>
+                                <object>
+                                    <name>VLAN</name>
+                                    <objectType>writableTable</objectType>
+                                    <maxInstance>128</maxInstance>
+                                    <functions>
+                                        <func_GetEntryCount>WanIfVirtIfVLAN_GetEntryCount</func_GetEntryCount>
+                                        <func_GetEntry>WanIfVirtIfVLAN_GetEntry</func_GetEntry>
+                                        <func_AddEntry>WanIfVirtIfVLAN_AddEntry</func_AddEntry>
+                                        <func_DelEntry>WanIfVirtIfVLAN_DelEntry</func_DelEntry>
+                                        <func_GetParamStringValue>WanIfVirtIfVLAN_GetParamStringValue</func_GetParamStringValue>
+                                        <func_SetParamStringValue>WanIfVirtIfVLAN_SetParamStringValue</func_SetParamStringValue>
+                                        <func_Validate>WanIfVirtIfVLAN_Validate</func_Validate>
+                                        <func_Commit>WanIfVirtIfVLAN_Commit</func_Commit>
+                                        <func_Rollback>WanIfVirtIfVLAN_Rollback</func_Rollback>
+                                    </functions>
+                                    <parameters>
+                                        <parameter>
+                                            <name>Interface</name>
+                                            <type>string</type>
+                                            <syntax>string</syntax>
+                                            <writable>true</writable>
+                                        </parameter>
+                                    </parameters>
+                                </object>
+                                <object>
+                                    <name>Marking</name>
+                                    <objectType>writableTable</objectType>
+                                    <maxInstance>128</maxInstance>
+                                    <functions>
+                                        <func_GetEntryCount>WanIfVirtIfMarking_GetEntryCount</func_GetEntryCount>
+                                        <func_GetEntry>WanIfVirtIfMarking_GetEntry</func_GetEntry>
+                                        <func_AddEntry>WanIfVirtIfMarking_AddEntry</func_AddEntry>
+                                        <func_DelEntry>WanIfVirtIfMarking_DelEntry</func_DelEntry>
+                                        <func_GetParamStringValue>WanIfVirtIfMarking_GetParamStringValue</func_GetParamStringValue>
+                                        <func_SetParamStringValue>WanIfVirtIfMarking_SetParamStringValue</func_SetParamStringValue>
+                                        <func_Validate>WanIfVirtIfMarking_Validate</func_Validate>
+                                        <func_Commit>WanIfVirtIfMarking_Commit</func_Commit>
+                                        <func_Rollback>WanIfVirtIfMarking_Rollback</func_Rollback>
+                                    </functions>
+                                    <parameters>
+                                        <parameter>
+                                            <name>Entry</name>
+                                            <type>string</type>
+                                            <syntax>string</syntax>
+                                            <writable>true</writable>
+                                        </parameter>
+                                    </parameters>
+                                </object>
+                                <object>
+                                    <name>X_RDK_IPv4</name>
+                                    <objectType>object</objectType>
+                                    <functions>
+                                        <func_GetParamUlongValue>Wan_Xrdk_IPv4_GetParamUlongValue</func_GetParamUlongValue>
+                                        <func_GetParamUlongValue>Wan_Xrdk_IPv4_SetParamUlongValue</func_GetParamUlongValue>
+                                        <func_GetParamBoolValue>Wan_Xrdk_IPv4_GetParamBoolValue</func_GetParamBoolValue>
+                                        <func_SetParamBoolValue>Wan_Xrdk_IPv4_SetParamBoolValue</func_SetParamBoolValue>
+                                        <func_Validate>Wan_Xrdk_IPv4_Validate</func_Validate>
+                                        <func_Commit>Wan_Xrdk_IPv4_Commit</func_Commit>
+                                        <func_Rollback>Wan_Xrdk_IPv4_Rollback</func_Rollback>
+                                    </functions>
+                                    <parameters>
+                                        <parameter>
+                                            <name>Enable</name>
+                                            <type>boolean</type>
+                                            <syntax>bool</syntax>
+                                            <writable>true</writable>
+                                        </parameter>
+                                        <parameter>
+                                            <name>Status</name>
+                                            <type>string: Unknown(0),Up(1),Down(2)</type>
+                                            <syntax>uint32/mapped</syntax>
+                                            <writable>true</writable>
+                                        </parameter>
+                                        <parameter>
+                                            <name>IPAddress</name>
+                                            <type>string</type>
+                                            <syntax>uint32/ip4_addr</syntax>
+                                            <writable>true</writable>
+                                        </parameter>
+                                        <parameter>
+                                            <name>SubnetMask</name>
+                                            <type>string</type>
+                                            <syntax>uint32/ip4_addr</syntax>
+                                            <writable>true</writable>
+                                        </parameter>
+                                        <parameter>
+                                            <name>AddressType</name>
+                                            <type>string: Unknown(0),DHCP(1),Static(2),Auto-IP(3)</type>
+                                            <syntax>uint32/mapped</syntax>
+                                            <writable>true</writable>
+                                        </parameter>
+                                    </parameters>
+                                </object>
+                                <object>
+                                    <name>X_RDK_IPv6</name>
+                                    <objectType>object</objectType>
+                                    <functions>
+                                        <func_GetParamUlongValue>Wan_Xrdk_IPv6_GetParamUlongValue</func_GetParamUlongValue>
+                                        <func_GetParamUlongValue>Wan_Xrdk_IPv6_SetParamUlongValue</func_GetParamUlongValue>
+                                        <func_GetParamBoolValue>Wan_Xrdk_IPv6_GetParamBoolValue</func_GetParamBoolValue>
+                                        <func_SetParamBoolValue>Wan_Xrdk_IPv6_SetParamBoolValue</func_SetParamBoolValue>
+                                        <func_GetParamStringValue>Wan_Xrdk_IPv6_GetParamStringValue</func_GetParamStringValue>
+                                        <func_SetParamStringValue>Wan_Xrdk_IPv6_SetParamStringValue</func_SetParamStringValue>
+                                        <func_Validate>Wan_Xrdk_IPv6_Validate</func_Validate>
+                                        <func_Commit>Wan_Xrdk_IPv6_Commit</func_Commit>
+                                        <func_Rollback>Wan_Xrdk_IPv6_Rollback</func_Rollback>
+                                    </functions>
+                                    <parameters>
+                                        <parameter>
+                                            <name>Enable</name>
+                                            <type>boolean</type>
+                                            <syntax>bool</syntax>
+                                            <writable>true</writable>
+                                        </parameter>
+                                        <parameter>
+                                            <name>Status</name>
+                                            <type>string: Unknown(0),Up(1),Down(2)</type>
+                                            <syntax>uint32/mapped</syntax>
+                                            <writable>true</writable>
+                                        </parameter>
+                                        <parameter>
+                                            <name>IPAddress</name>
+                                            <type>string</type>
+                                            <syntax>string</syntax>
+                                            <writable>true</writable>
+                                        </parameter>
+                                        <parameter>
+                                            <name>IPPrefix</name>
+                                            <type>string</type>
+                                            <syntax>string</syntax>
+                                            <writable>true</writable>
+                                        </parameter>
+                                        <parameter>
+                                            <name>SubnetMask</name>
+                                            <type>string</type>
+                                            <syntax>string</syntax>
+                                            <writable>true</writable>
+                                        </parameter>
+                                        <parameter>
+                                            <name>AddressType</name>
+                                            <type>string: Unknown(0),LinkLocal(1),DHCP(2),Static(3),Auto-IP(4)</type>
+                                            <syntax>uint32/mapped</syntax>
+                                            <writable>true</writable>
+                                        </parameter>
+                                    </parameters>
+                                </object>
+                            </objects>
+                        </object>
+                    <object>
+                        <name>Marking</name>
+                        <objectType>writableTable</objectType>
+                        <maxInstance>128</maxInstance>
+                        <functions>
+                            <func_GetEntryCount>WanIfMarking_GetEntryCount</func_GetEntryCount>
+                            <func_GetEntry>WanIfMarking_GetEntry</func_GetEntry>
+                            <func_AddEntry>WanIfMarking_AddEntry</func_AddEntry>
+                            <func_DelEntry>WanIfMarking_DelEntry</func_DelEntry>
+                            <func_GetParamIntValue>WanIfMarking_GetParamIntValue</func_GetParamIntValue>
+                            <func_GetParamUlongValue>WanIfMarking_GetParamUlongValue</func_GetParamUlongValue>
+                            <func_GetParamStringValue>WanIfMarking_GetParamStringValue</func_GetParamStringValue>
+                            <func_GetParamIntValue>WanIfMarking_GetParamIntValue</func_GetParamIntValue>
+                            <func_SetParamIntValue>WanIfMarking_SetParamIntValue</func_SetParamIntValue>
+                            <func_SetParamUlongValue>WanIfMarking_SetParamUlongValue</func_SetParamUlongValue>
+                            <func_SetParamStringValue>WanIfMarking_SetParamStringValue</func_SetParamStringValue>
+                            <func_Validate>WanIfMarking_Validate</func_Validate>
+                            <func_Commit>WanIfMarking_Commit</func_Commit>
+                            <func_Rollback>WanIfMarking_Rollback</func_Rollback>
+                        </functions>
+                        <parameters>
+                            <parameter>
+                                <name>Alias</name>
+                                <type>string(64)</type>
+                                <syntax>string</syntax>
+                                <writable>true</writable>
+                            </parameter>
+                            <parameter>
+                                <name>SKBPort</name>
+                                <type>unsignedInt</type>
+                                <syntax>uint32</syntax>
+                            </parameter>
+                            <parameter>
+                                <name>SKBMark</name>
+                                <type>unsignedInt</type>
+                                <syntax>uint32</syntax>
+                            </parameter>
+                            <parameter>
+                                <name>EthernetPriorityMark</name>
+                                <type>int</type>
+                                <syntax>int</syntax>
+                                <writable>true</writable>
+                            </parameter>
+                        </parameters>
+                    </object>
+                  </objects>
+                </object>
+            </objects>
+        </object>
+    </objects>
+</dataModelInfo>
+
+<?endif?>
+

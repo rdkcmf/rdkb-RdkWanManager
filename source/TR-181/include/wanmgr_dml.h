@@ -29,6 +29,15 @@
 #define PAM_IF_PARAM_NAME           "Device.IP.Interface.%d.Name"
 #define DML_WAN_IFACE_PRIORITY_MAX  255
 
+//#define FEATURE_RDKB_WAN_MULTI_VLAN 1
+
+typedef enum _WANMGR_IFACE_SELECTION_STATUS
+{
+    WAN_IFACE_NOT_SELECTED = 1,
+    WAN_IFACE_SELECTED,
+    WAN_IFACE_ACTIVE
+} WANMGR_IFACE_SELECTION;
+
 typedef enum _DML_WAN_POLICY
 {
    FIXED_MODE_ON_BOOTUP = 1,
@@ -38,13 +47,6 @@ typedef enum _DML_WAN_POLICY
    MULTIWAN_MODE,
    AUTOWAN_MODE
 } DML_WAN_POLICY;
-
-typedef enum _DML_WAN_IFACE_OPER_STATUS
-{
-    WAN_OPERSTATUS_UNKNOWN = 1,
-    WAN_OPERSTATUS_OPERATIONAL,
-    WAN_OPERSTATUS_NOT_OPERATIONAL
-} DML_WAN_IFACE_OPER_STATUS;
 
 typedef enum _DML_WAN_IFACE_STATUS
 {
@@ -61,80 +63,21 @@ typedef enum _DML_WAN_IFACE_LINKSTATUS
     WAN_IFACE_LINKSTATUS_CONFIGURING,
     WAN_IFACE_LINKSTATUS_UP
 } DML_WAN_IFACE_LINKSTATUS;
+
 typedef enum _WAN_MANAGER_STATUS
 {
     WAN_MANAGER_DOWN = 1,
     WAN_MANAGER_UP
 } WAN_MANAGER_STATUS;
 
-/** enum wan iface phy status */
-typedef enum _DML_WAN_IFACE_PHY_STATUS
-{
-    WAN_IFACE_PHY_STATUS_DOWN = 1,
-    WAN_IFACE_PHY_STATUS_INITIALIZING,
-    WAN_IFACE_PHY_STATUS_UP,
-    WAN_IFACE_PHY_STATUS_UNKNOWN
-} DML_WAN_IFACE_PHY_STATUS;
-
 /** enum wan status */
-typedef enum _DML_WAN_IFACE_TYPE
+typedef enum _DML_WAN_IFACE_IP_STATUS
 {
-    WAN_IFACE_TYPE_UNCONFIGURED = 1,
-    WAN_IFACE_TYPE_PRIMARY,
-    WAN_IFACE_TYPE_SECONDARY
-} DML_WAN_IFACE_TYPE;
-
-/** enum wan status */
-typedef enum _DML_WAN_IFACE_IPV4_STATUS
-{
-    WAN_IFACE_IPV4_STATE_UP = 1,
-    WAN_IFACE_IPV4_STATE_DOWN,
-    WAN_IFACE_IPV4_STATE_UNKNOWN
-} DML_WAN_IFACE_IPV4_STATUS;
-
-/** enum wan status */
-typedef enum _DML_WAN_IFACE_IPV6_STATUS
-{
-    WAN_IFACE_IPV6_STATE_UP = 1,
-    WAN_IFACE_IPV6_STATE_DOWN,
-    WAN_IFACE_IPV6_STATE_UNKNOWN
-} DML_WAN_IFACE_IPV6_STATUS;
-
-/** enum wan status */
-typedef enum _DML_WAN_IFACE_MAPT_STATUS
-{
-    WAN_IFACE_MAPT_STATE_UP = 1,
-    WAN_IFACE_MAPT_STATE_DOWN
-} DML_WAN_IFACE_MAPT_STATUS;
-
-/** enum dslite status */
-typedef enum _DML_WAN_IFACE_DSLITE_STATUS
-{
-    WAN_IFACE_DSLITE_STATE_UP = 1,
-    WAN_IFACE_DSLITE_STATE_DOWN
-} DML_WAN_IFACE_DSLITE_STATUS;
-
-/** enum wan status */
-typedef enum _WAN_NOTIFY_ENUM
-{
-    NOTIFY_TO_VLAN_AGENT        = 1
-} WAN_NOTIFY_ENUM;
-
-/** Enum IP (IPV4/IPV6/MAPT) state type. **/
-typedef enum _DML_WAN_IFACE_IP_STATE_TYPE
-{
-    WAN_IFACE_IPV4_STATE = 0,
-    WAN_IFACE_IPV6_STATE,
-    WAN_IFACE_MAPT_STATE,
-    WAN_IFACE_DSLITE_STATE
-} DML_WAN_IFACE_IP_STATE_TYPE;
-
-/** Enum IP state. UP/DOWN */
-typedef enum _DML_WAN_IFACE_IP_STATE
-{
-    WAN_IFACE_IP_STATE_UP = 1,
+    WAN_IFACE_IP_STATE_UNKNOWN,
+    WAN_IFACE_IP_STATE_UP,
     WAN_IFACE_IP_STATE_DOWN,
-} DML_WAN_IFACE_IP_STATE;
+} DML_WAN_IFACE_IP_STATUS;
+
 /*
  *  Wan Marking object
  */
@@ -160,6 +103,69 @@ typedef struct _DATAMODEL_MARKING
     SLIST_HEADER      MarkingList;
     ULONG             ulNextInstanceNumber;
 } DATAMODEL_MARKING;
+
+/** enum wan status */
+typedef enum _WAN_NOTIFY_ENUM
+{
+    NOTIFY_TO_VLAN_AGENT        = 1
+} WAN_NOTIFY_ENUM;
+
+
+#ifndef FEATURE_RDKB_WAN_MULTI_VLAN
+
+typedef enum _DML_WAN_IFACE_OPER_STATUS
+{
+    WAN_OPERSTATUS_UNKNOWN = 1,
+    WAN_OPERSTATUS_OPERATIONAL,
+    WAN_OPERSTATUS_NOT_OPERATIONAL
+} DML_WAN_IFACE_OPER_STATUS;
+
+/** enum wan iface phy status */
+typedef enum _DML_WAN_IFACE_PHY_STATUS
+{
+    WAN_IFACE_PHY_STATUS_DOWN = 1,
+    WAN_IFACE_PHY_STATUS_INITIALIZING,
+    WAN_IFACE_PHY_STATUS_UP,
+    WAN_IFACE_PHY_STATUS_UNKNOWN
+} DML_WAN_IFACE_PHY_STATUS;
+
+/** enum wan status */
+typedef enum _DML_WAN_IFACE_TYPE
+{
+    WAN_IFACE_TYPE_UNCONFIGURED = 1,
+    WAN_IFACE_TYPE_PRIMARY,
+    WAN_IFACE_TYPE_SECONDARY
+} DML_WAN_IFACE_TYPE;
+
+/** enum wan status */
+typedef enum _DML_WAN_IFACE_MAPT_STATUS
+{
+    WAN_IFACE_MAPT_STATE_UP = 1,
+    WAN_IFACE_MAPT_STATE_DOWN
+} DML_WAN_IFACE_MAPT_STATUS;
+
+/** enum dslite status */
+typedef enum _DML_WAN_IFACE_DSLITE_STATUS
+{
+    WAN_IFACE_DSLITE_STATE_UP = 1,
+    WAN_IFACE_DSLITE_STATE_DOWN
+} DML_WAN_IFACE_DSLITE_STATUS;
+
+/** Enum IP (IPV4/IPV6/MAPT) state type. **/
+typedef enum _DML_WAN_IFACE_IP_STATE_TYPE
+{
+    WAN_IFACE_IPV4_STATE = 0,
+    WAN_IFACE_IPV6_STATE,
+    WAN_IFACE_MAPT_STATE,
+    WAN_IFACE_DSLITE_STATE
+} DML_WAN_IFACE_IP_STATE_TYPE;
+
+/** Enum IP state. UP/DOWN */
+typedef enum _DML_WAN_IFACE_IP_STATE
+{
+    WAN_IFACE_IP_STATE_UP = 1,
+    WAN_IFACE_IP_STATE_DOWN,
+} DML_WAN_IFACE_IP_STATE;
 
 /*** RDK WAN Interface ***/
 typedef struct _DML_WANIFACE_PHY
@@ -219,14 +225,6 @@ typedef struct _DATAMODEL_PPP
     DML_WAN_IFACE_LINK_TYPE       LinkType;
 } DATAMODEL_PPP;
 
-typedef struct _DML_WANIFACE_WANCFG_VALID
-{
-    BOOL                        DiscoverOffer;
-    BOOL                        SolicitAdvertise;
-    BOOL                        RS_RA;
-    BOOL                        PadiPado;
-} DML_WANIFACE_WANCFG_VALID;
-
 typedef struct _DML_WANIFACE_INFO
 {
     CHAR                        Name[BUFLEN_64];
@@ -241,16 +239,9 @@ typedef struct _DML_WANIFACE_INFO
     DML_WAN_IFACE_STATUS        Status;
     DML_WAN_IFACE_LINKSTATUS    LinkStatus;
     BOOL                        Refresh;
-    DML_WANIFACE_WANCFG_VALID   Validation;
     DML_WAN_IFACE_OPER_STATUS   OperationalStatus;
     BOOL                        RebootOnConfiguration;
 } DML_WANIFACE_INFO;
-
-typedef struct _DML_WANIFACE_DYNTRIGGER
-{
-    BOOL                        Enable;
-    ULONG                       Delay;
-} DML_WANIFACE_DYNTRIGGER;
 
 
 typedef struct _WANMGR_IPV4_DATA
@@ -294,6 +285,28 @@ typedef struct _DML_WANIFACE_IP
     UINT                        Dhcp6cPid;
 } DML_WANIFACE_IP;
 
+#ifdef FEATURE_MAPT
+/* Data body for MAPT information to set sysevents*/
+typedef struct
+{
+    char maptConfigFlag[BUFLEN_8]; //Flag to indicates to set/reset firewall rules. [SET/RESET]
+    UINT ratio;
+    char baseIfName[BUFLEN_64];
+    char ipAddressString[BUFLEN_32];
+    char ruleIpAddressString[BUFLEN_32];
+    char ipv6AddressString[BUFLEN_128];
+    char brIpv6PrefixString[BUFLEN_128];
+    char ruleIpv6AddressString[BUFLEN_128];
+    UINT psidOffset;
+    UINT psidValue;
+    UINT psidLen;
+    UINT eaLen;
+    UINT v4Len;
+    BOOL mapeAssigned;     /**< Have we been assigned mape config ? */
+    BOOL maptAssigned;     /**< Have we been assigned mapt config ? */
+    BOOL isFMR;
+}MaptData_t;
+#endif
 
 typedef struct _DML_WANIFACE_MAP
 {
@@ -301,7 +314,7 @@ typedef struct _DML_WANIFACE_MAP
     CHAR                        Path[BUFLEN_64];
     BOOL                        MaptChanged;
 #ifdef FEATURE_MAPT
-    Dhcp6cMAPTParametersMsgBody dhcp6cMAPTparameters;
+    ipc_mapt_data_t dhcp6cMAPTparameters;
 #endif
 } DML_WANIFACE_MAP;
 
@@ -318,13 +331,13 @@ typedef struct _DML_WAN_INTERFACE
     UINT                        uiInstanceNumber;
     CHAR                        Name[BUFLEN_64];
     CHAR                        DisplayName[BUFLEN_64];
+    WANMGR_IFACE_SELECTION      SelectionStatus;
     BOOL                        MonitorOperStatus;
     BOOL                        WanConfigEnabled;
     BOOL                        CustomConfigEnable;
     CHAR                        CustomConfigPath[BUFLEN_128];
     DML_WANIFACE_PHY            Phy;
     DML_WANIFACE_INFO           Wan;
-    DML_WANIFACE_DYNTRIGGER     DynamicTrigger;
     DML_WANIFACE_IP             IP;
     DATAMODEL_PPP               PPP;
     DML_WANIFACE_MAP            MAP;
@@ -332,13 +345,146 @@ typedef struct _DML_WAN_INTERFACE
     DATAMODEL_MARKING           Marking;
 } DML_WAN_IFACE;
 
+#else
 
+typedef enum _WAN_PROTOCOL_TYPE
+{
+    WAN_PROTOCOL_TYPE_UNKNOWN,
+    WAN_PROTOCOL_TYPE_DHCP,
+    WAN_PROTOCOL_TYPE_PPP,
+}WAN_PROTOCOL_TYPE;
+
+typedef enum _WAN_IFACE_IPV4_ADDTYPE
+{
+    WAN_IFACE_IPV4_ADDRTYPE_UNKNOWN,
+    WAN_IFACE_IPV4_ADDRTYPE_DHCP,
+    WAN_IFACE_IPV4_ADDRTYPE_STATIC,
+    WAN_IFACE_IPV4_ADDRTYPE_AUTOIP
+}WAN_IFACE_IPV4_ADDTYPE;
+
+typedef enum _WAN_IFACE_IPV6_ADDTYPE
+{
+    WAN_IFACE_IPV6_ADDRTYPE_UNKNOWN,
+    WAN_IFACE_IPV6_ADDRTYPE_LINKLOCAL,
+    WAN_IFACE_IPV6_ADDRTYPE_DHCP,
+    WAN_IFACE_IPV6_ADDRTYPE_STATIC,
+    WAN_IFACE_IPV6_ADDRTYPE_SLAAC
+}WAN_IFACE_IPV6_ADDTYPE;
+
+typedef struct _DML_SELECTION_INFO
+{
+    BOOL                       Enable;
+    WANMGR_IFACE_SELECTION     Status;
+    BOOL                       ActiveLink;
+    INT                        Priority;
+    INT                        TimeOut;
+    BOOL                       RequireReboot;
+}DML_SELECTION_INFO;
+
+
+typedef struct _DML_IPV4_INFO
+{
+    BOOL                       Enable;
+    DML_WAN_IFACE_IP_STATUS    Status;
+    ULONG                      IPAddress;
+    ULONG                      SubnetMask;
+    WAN_IFACE_IPV4_ADDTYPE     AddressType;
+}DML_IPV4_INFO;
+
+typedef struct _DML_IPV6_INFO
+{
+    BOOL                       Enable;
+    DML_WAN_IFACE_IP_STATUS    Status;
+    CHAR                       IPAddress[BUFLEN_64];
+    CHAR                       IPPrefix[BUFLEN_64];
+    CHAR                       SubnetMask[BUFLEN_64];
+    WAN_IFACE_IPV6_ADDTYPE     AddressType;
+}DML_IPV6_INFO;
+
+typedef struct _DML_VIRTIF_VLAN
+{
+    ULONG                       VlanInstanceNumber;
+    ULONG                       VirtIfInstanceNumber;
+    ULONG                       ulWANIfInstanceNumber;
+    CHAR                        Interface[BUFLEN_256];
+
+}DML_VIRTIF_VLAN;
+
+typedef struct _DATAMODEL_VIRTIF_VLAN
+{
+    SLIST_HEADER      VirtIfVlanList;
+    ULONG             ulNextInstanceNumber;
+} DATAMODEL_VIRTIF_VLAN;
+
+
+typedef struct _DML_VIRTIF_MARKING
+{
+    ULONG                       MarkingInstanceNumber;
+    ULONG                       VirtIfInstanceNumber;
+    ULONG                       ulWANIfInstanceNumber;
+    CHAR                        Entry[BUFLEN_256];
+
+}DML_VIRTIF_MARKING;
+
+typedef struct _DATAMODEL_VIRTIF_MARKING
+{
+    SLIST_HEADER      VirtIfMarkingList;
+    ULONG             ulNextInstanceNumber;
+} DATAMODEL_VIRTIF_MARKING;
+
+typedef struct _DML_XRDK_IP_INFO
+{
+    DML_IPV4_INFO IPv4;
+    DML_IPV6_INFO IPv6;
+}DML_XRDK_IP_INFO;
+
+typedef struct _DML_VIRTUALINTERFACE_INFO
+{
+    ULONG                       InstanceNumber;
+    ULONG                       ulWANIfInstanceNumber;
+    BOOL                        Enable;
+    CHAR                        Name[BUFLEN_64];
+    CHAR                        Alias[BUFLEN_64];
+    UINT                        TimeOut;
+    DML_WAN_IFACE_STATUS        Status;
+    BOOL                        Refresh;
+    WAN_PROTOCOL_TYPE           WanProtocol;
+    CHAR                        PPPInterface[BUFLEN_256];
+    CHAR                        IPInterface[BUFLEN_256];
+    BOOL                        VLANInUse;
+    UINT                        VLANNumberOfEntries;
+    DATAMODEL_VIRTIF_VLAN       Vlan;
+    UINT                        MarkingNumberOfEntries;
+    DATAMODEL_VIRTIF_MARKING    Marking;
+    DML_XRDK_IP_INFO            Xrdk_IP;
+
+} DML_VIRTIFACE_INFO;
+
+typedef struct _DATAMODEL_VIRTIF
+{
+    SLIST_HEADER                VirtIfList;
+    ULONG                       ulNextInstanceNumber;
+} DATAMODEL_VIRTIF;
+
+typedef struct _DML_WAN_INTERFACE
+{
+    UINT                        uiIfaceIdx;
+    UINT                        uiInstanceNumber;
+    CHAR                        Name[BUFLEN_64];
+    CHAR                        BaseInterface[BUFLEN_128];
+    DML_WAN_IFACE_LINKSTATUS    LinkStatus;
+    DML_WAN_IFACE_STATUS        Status;
+    DML_SELECTION_INFO          Selection;
+    DATAMODEL_VIRTIF            VirtIf;
+    DATAMODEL_MARKING           Marking;
+} DML_WAN_IFACE;
+
+#endif
 /*** RDK WAN Manager ***/
 typedef struct _DML_WANMGR_CONFIG_
 {
     BOOLEAN Enable;
     DML_WAN_POLICY Policy;
-    UINT IdleTimeout;
     BOOLEAN ResetActiveInterface;
 } DML_WANMGR_CONFIG;
 

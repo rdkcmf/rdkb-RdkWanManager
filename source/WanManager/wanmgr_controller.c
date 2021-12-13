@@ -21,6 +21,7 @@
 #include "wanmgr_controller.h"
 #include "wanmgr_rdkbus_utils.h"
 #include "wanmgr_data.h"
+#include "wanmgr_rbus_action_apis.h"
 
 ANSC_STATUS WanController_Policy_Change(void)
 {
@@ -32,6 +33,7 @@ ANSC_STATUS WanController_Policy_Change(void)
     int seconds = 30;
     int rebootCount = 1;
 
+    WanController_ClearWanConfigurationsInPSM();
     memset(value, 0, sizeof(value));
     fp = popen("syscfg get X_RDKCENTRAL-COM_LastRebootCounter", "r");
     if (fp == NULL) {
@@ -83,26 +85,30 @@ ANSC_STATUS WanController_Start_StateMachine(DML_WAN_POLICY swan_policy)
     //Starts wan controller threads
     switch (wan_policy) {
         case FIXED_MODE:
-            retStatus = WanMgr_Policy_FixedModePolicy();
+            //ToDo: Remove Comments,after Varifed FM Policy On New WanManager DM.
+            //retStatus = WanMgr_Policy_FixedModePolicy();
             break;
 
         case FIXED_MODE_ON_BOOTUP:
-            retStatus = WanMgr_Policy_FixedModeOnBootupPolicy();
+	    //ToDo: Remove Comments,after Varifed FMoB Policy On New WanManager DM.
+            //retStatus = WanMgr_Policy_FixedModeOnBootupPolicy();
             break;
 
         case PRIMARY_PRIORITY:
-            retStatus = WanMgr_Policy_PrimaryPriorityPolicy();
+	    //ToDo: Remove Comments,after Varifed PP Policy On New WanManager DM.
+            //retStatus = WanMgr_Policy_PrimaryPriorityPolicy();
             break;
 
         case PRIMARY_PRIORITY_ON_BOOTUP:
-            retStatus = WanMgr_Policy_PrimaryPriorityOnBootupPolicy();
+	    //ToDo: Remove Comments,after Varifed PPoB Policy On New WanManager DM.
+            //retStatus = WanMgr_Policy_PrimaryPriorityOnBootupPolicy();
             break;
 
         case MULTIWAN_MODE:
             break;
 
         case AUTOWAN_MODE: 
-#if defined (_XB8_PRODUCT_REQ_)
+#if defined (_XB6_PRODUCT_REQ_)
             retStatus = WanMgr_Policy_AutoWan();
 #else
             retStatus = WanMgr_Policy_AutoWanPolicy();

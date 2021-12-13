@@ -56,11 +56,6 @@ WanManager_GetParamUlongValue(ANSC_HANDLE hInsContext, char* ParamName, ULONG* p
             *puLong= pWanDmlData->Policy;
             ret = TRUE;
         }
-        else if(AnscEqualString(ParamName, "IdleTimeout", TRUE))
-        {
-            *puLong= pWanDmlData->IdleTimeout;
-            ret = TRUE;
-        }
 
         WanMgrDml_GetConfigData_release(pWanConfigData);
     }
@@ -88,11 +83,6 @@ WanManager_SetParamUlongValue(ANSC_HANDLE hInsContext, char* ParamName, ULONG uV
                 WanController_Policy_Change();
                 ret = TRUE;
             }
-        }
-        else if(AnscEqualString(ParamName, "IdleTimeout", TRUE))
-        {
-            pWanDmlData->IdleTimeout = uValue;
-            ret = TRUE;
         }
 
         WanMgrDml_GetConfigData_release(pWanConfigData);
@@ -149,6 +139,8 @@ BOOL WanManager_SetParamStringValue(ANSC_HANDLE hInsContext, char* ParamName, ch
             WanMgrDml_GetConfigData_release(pWanConfigData);
             return ret;
         }
+/*
+ * ToDo: Remove Comment, while working on Interface State Machine.
         if ( ANSC_STATUS_SUCCESS == WanMgrDmlWanDataSet(webConf,webSize) )
         {
             CcspTraceInfo(("%s Success in parsing web config blob..\n",__FUNCTION__));
@@ -158,6 +150,7 @@ BOOL WanManager_SetParamStringValue(ANSC_HANDLE hInsContext, char* ParamName, ch
         {
             CcspTraceError(("%s Failed to parse webconfig blob..\n",__FUNCTION__));
         }
+*/
         AnscFreeMemory(webConf);
         WanMgrDml_GetConfigData_release(pWanConfigData);
     }

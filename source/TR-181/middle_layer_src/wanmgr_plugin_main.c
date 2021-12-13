@@ -60,9 +60,16 @@
 #include "wanmgr_plugin_main.h"
 #include "wanmgr_plugin_main_apis.h"
 #include "wanmgr_dml_apis.h"
-#include "wanmgr_dml_iface_apis.h"
+
+
+#ifndef FEATURE_RDKB_WAN_MULTI_VLAN
 #include "wanmgr_dml_dhcpv4.h"
 #include "wanmgr_dml_dhcpv6.h"
+#include "wanmgr_dml_iface_apis.h"
+#else
+#include "wanmgr_dml_virtif_ip_apis.h"
+#include "wanmgr_dml_virtif_apis.h"
+#endif
 
 void *                  g_pDslhDmlAgent;
 extern ANSC_HANDLE      g_MessageBusHandle_Irep;
@@ -354,6 +361,7 @@ int ANSC_EXPORT_API WanManagerDmlInit(ULONG uMaxVersionSupported, void* hCosaPlu
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanManager_Validate", WanManager_Validate);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanManager_Commit",  WanManager_Commit);
 
+#ifndef FEATURE_RDKB_WAN_MULTI_VLAN
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIf_GetEntryCount", WanIf_GetEntryCount);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIf_GetEntry", WanIf_GetEntry);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIf_GetParamStringValue", WanIf_GetParamStringValue);
@@ -363,6 +371,7 @@ int ANSC_EXPORT_API WanManagerDmlInit(ULONG uMaxVersionSupported, void* hCosaPlu
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIf_Validate", WanIf_Validate);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIf_Commit", WanIf_Commit);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIf_Rollback", WanIf_Rollback);
+
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfPhy_GetParamStringValue", WanIfPhy_GetParamStringValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfPhy_SetParamStringValue", WanIfPhy_SetParamStringValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfPhy_GetParamUlongValue", WanIfPhy_GetParamUlongValue);
@@ -383,13 +392,6 @@ int ANSC_EXPORT_API WanManagerDmlInit(ULONG uMaxVersionSupported, void* hCosaPlu
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfCfg_Commit", WanIfCfg_Commit);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfCfg_Rollback", WanIfCfg_Rollback);
 
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfDynTrigger_GetParamUlongValue", WanIfDynTrigger_GetParamUlongValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfDynTrigger_SetParamUlongValue", WanIfDynTrigger_SetParamUlongValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfDynTrigger_GetParamBoolValue", WanIfDynTrigger_GetParamBoolValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfDynTrigger_SetParamBoolValue", WanIfDynTrigger_SetParamBoolValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfDynTrigger_Validate", WanIfDynTrigger_Validate);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfDynTrigger_Commit", WanIfDynTrigger_Commit);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfDynTrigger_Rollback", WanIfDynTrigger_Rollback);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfIpCfg_GetParamUlongValue", WanIfIpCfg_GetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfIpCfg_SetParamUlongValue", WanIfIpCfg_SetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfIpCfg_GetParamStringValue", WanIfIpCfg_GetParamStringValue);
@@ -435,12 +437,6 @@ int ANSC_EXPORT_API WanManagerDmlInit(ULONG uMaxVersionSupported, void* hCosaPlu
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Marking_Validate", Marking_Validate);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Marking_Commit", Marking_Commit);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Marking_Rollback", Marking_Rollback);
-
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfValidation_GetParamBoolValue", WanIfValidation_GetParamBoolValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfValidation_SetParamBoolValue", WanIfValidation_SetParamBoolValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfValidation_Validate", WanIfValidation_Validate);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfValidation_Commit", WanIfValidation_Commit);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfValidation_Rollback", WanIfValidation_Rollback);
 
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DHCPv6_GetParamBoolValue", DHCPv6_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DHCPv6_GetParamIntValue", DHCPv6_GetParamIntValue);
@@ -488,6 +484,10 @@ int ANSC_EXPORT_API WanManagerDmlInit(ULONG uMaxVersionSupported, void* hCosaPlu
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption1_Commit", SentOption1_Commit);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption1_Rollback", SentOption1_Rollback);
 
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "dhcp6c_mapt_mape_GetParamBoolValue", dhcp6c_mapt_mape_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "dhcp6c_mapt_mape_GetParamUlongValue", dhcp6c_mapt_mape_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "dhcp6c_mapt_mape_GetParamStringValue", dhcp6c_mapt_mape_GetParamStringValue);
+
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DHCPv4_GetParamBoolValue", DHCPv4_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DHCPv4_GetParamIntValue", DHCPv4_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DHCPv4_GetParamUlongValue", DHCPv4_GetParamUlongValue);
@@ -511,7 +511,95 @@ int ANSC_EXPORT_API WanManagerDmlInit(ULONG uMaxVersionSupported, void* hCosaPlu
 
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SentOption_GetEntryCount", SentOption_GetEntryCount);
 
+#else
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIf_GetEntryCount", WanIf_GetEntryCount);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIf_GetEntry", WanIf_GetEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIf_GetParamUlongValue", WanIf_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIf_SetParamUlongValue", WanIf_SetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIf_GetParamStringValue", WanIf_GetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIf_SetParamStringValue", WanIf_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIf_GetParamBoolValue", WanIf_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIf_SetParamBoolValue", WanIf_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIf_Validate", WanIf_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIf_Commit", WanIf_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIf_Rollback", WanIf_Rollback);
 
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfSelection_GetParamIntValue", WanIfSelection_GetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfSelection_SetParamIntValue", WanIfSelection_SetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfSelection_GetParamUlongValue", WanIfSelection_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfSelection_SetParamUlongValue", WanIfSelection_SetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfSelection_GetParamBoolValue", WanIfSelection_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfSelection_SetParamBoolValue", WanIfSelection_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfSelection_Validate", WanIfSelection_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfSelection_Commit", WanIfSelection_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfSelection_Rollback", WanIfSelection_Rollback);
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIf_GetEntryCount", WanIfVirtIf_GetEntryCount);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIf_GetEntry", WanIfVirtIf_GetEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIf_AddEntry", WanIfVirtIf_AddEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIf_DelEntry", WanIfVirtIf_DelEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIf_GetParamUlongValue", WanIfVirtIf_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIf_SetParamUlongValue", WanIfVirtIf_SetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIf_GetParamBoolValue", WanIfVirtIf_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIf_SetParamBoolValue", WanIfVirtIf_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIf_GetParamStringValue", WanIfVirtIf_GetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIf_SetParamStringValue", WanIfVirtIf_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIf_Validate", WanIfVirtIf_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIf_Commit", WanIfVirtIf_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIf_Rollback", WanIfVirtIf_Rollback);
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfVLAN_GetEntryCount", WanIfVirtIfVLAN_GetEntryCount);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfVLAN_GetEntry", WanIfVirtIfVLAN_GetEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfVLAN_AddEntry", WanIfVirtIfVLAN_AddEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfVLAN_DelEntry", WanIfVirtIfVLAN_DelEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfVLAN_GetParamStringValue", WanIfVirtIfVLAN_GetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfVLAN_SetParamStringValue", WanIfVirtIfVLAN_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfVLAN_Validate", WanIfVirtIfVLAN_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfVLAN_Commit", WanIfVirtIfVLAN_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfVLAN_Rollback", WanIfVirtIfVLAN_Rollback);
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfMarking_GetEntryCount", WanIfVirtIfMarking_GetEntryCount);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfMarking_GetEntry", WanIfVirtIfMarking_GetEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfMarking_AddEntry", WanIfVirtIfMarking_AddEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfMarking_DelEntry", WanIfVirtIfMarking_DelEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfMarking_GetParamStringValue", WanIfVirtIfMarking_GetParamStringValue);
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfMarking_SetParamStringValue", WanIfVirtIfMarking_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfMarking_Validate", WanIfVirtIfMarking_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfMarking_Commit", WanIfVirtIfMarking_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfMarking_Commit", WanIfVirtIfMarking_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfVirtIfMarking_Rollback", WanIfVirtIfMarking_Rollback);
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfMarking_GetEntry", WanIfMarking_GetEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfMarking_AddEntry", WanIfMarking_AddEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfMarking_DelEntry", WanIfMarking_DelEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfMarking_GetParamUlongValue", WanIfMarking_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfMarking_GetParamStringValue", WanIfMarking_GetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfMarking_GetParamIntValue", WanIfMarking_GetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfMarking_SetParamIntValue", WanIfMarking_SetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfMarking_SetParamUlongValue", WanIfMarking_SetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfMarking_SetParamStringValue", WanIfMarking_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfMarking_Validate", WanIfMarking_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfMarking_Commit", WanIfMarking_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "WanIfMarking_Rollback", WanIfMarking_Rollback);
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Wan_Xrdk_IPv4_GetParamUlongValue", Wan_Xrdk_IPv4_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Wan_Xrdk_IPv4_SetParamUlongValue", Wan_Xrdk_IPv4_SetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Wan_Xrdk_IPv4_GetParamBoolValue", Wan_Xrdk_IPv4_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Wan_Xrdk_IPv4_SetParamBoolValue", Wan_Xrdk_IPv4_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Wan_Xrdk_IPv4_Validate", Wan_Xrdk_IPv4_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Wan_Xrdk_IPv4_Commit", Wan_Xrdk_IPv4_Commit);
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Wan_Xrdk_IPv6_GetParamUlongValue", Wan_Xrdk_IPv6_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Wan_Xrdk_IPv6_SetParamUlongValue", Wan_Xrdk_IPv6_SetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Wan_Xrdk_IPv6_SetParamStringValue", Wan_Xrdk_IPv6_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Wan_Xrdk_IPv6_GetParamStringValue", Wan_Xrdk_IPv6_GetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Wan_Xrdk_IPv6_GetParamBoolValue", Wan_Xrdk_IPv6_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Wan_Xrdk_IPv6_SetParamBoolValue", Wan_Xrdk_IPv6_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Wan_Xrdk_IPv6_Validate", Wan_Xrdk_IPv6_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Wan_Xrdk_IPv6_Commit", Wan_Xrdk_IPv6_Commit);
+
+#endif
 
     /* Create backend framework */
     g_pWanMgrBE = (WANMGR_BACKEND_OBJ*)BackEndManagerCreate();

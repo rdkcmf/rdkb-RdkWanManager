@@ -67,9 +67,12 @@ void WanMgr_SetConfigData_Default(DML_WANMGR_CONFIG* pWanDmlConfig);
 //WAN IFACE
 UINT WanMgr_IfaceData_GetTotalWanIface(void);
 WanMgr_Iface_Data_t* WanMgr_GetIfaceData_locked(UINT iface_index);
-WanMgr_Iface_Data_t* WanMgr_GetIfaceDataByName_locked(char* iface_name);
 void WanMgrDml_GetIfaceData_release(WanMgr_Iface_Data_t* pWanIfaceData);
 void WanMgr_IfaceData_Init(WanMgr_Iface_Data_t* pIfaceData, UINT uiInstNumber);
+#ifndef FEATURE_RDKB_WAN_MULTI_VLAN
+//ToDo: If API Required, then Need to Re-Work on it, 
+WanMgr_Iface_Data_t* WanMgr_GetIfaceDataByName_locked(char* iface_name);
+#endif
 ANSC_STATUS WanMgr_WanDataInit(void);
 
 //WAN IFACE CTRL

@@ -42,25 +42,26 @@ typedef enum {
 
 
 /* STATES */
-static WcPpPolicyState_t State_WanDown(WanMgr_Policy_Controller_t* pWanController);
-static WcPpPolicyState_t State_PrimaryWanActive(WanMgr_Policy_Controller_t* pWanController);
-static WcPpPolicyState_t State_SecondaryWanActive(WanMgr_Policy_Controller_t* pWanController);
-static WcPpPolicyState_t State_PrimaryWanActiveSecondaryWanUp(WanMgr_Policy_Controller_t* pWanController);
+//static WcPpPolicyState_t State_WanDown(WanMgr_Policy_Controller_t* pWanController);
+//static WcPpPolicyState_t State_PrimaryWanActive(WanMgr_Policy_Controller_t* pWanController);
+//static WcPpPolicyState_t State_SecondaryWanActive(WanMgr_Policy_Controller_t* pWanController);
+//static WcPpPolicyState_t State_PrimaryWanActiveSecondaryWanUp(WanMgr_Policy_Controller_t* pWanController);
 
 /* TRANSITIONS */
 static WcPpPolicyState_t Transition_Start(WanMgr_Policy_Controller_t* pWanController);
-static WcPpPolicyState_t Transition_PrimaryInterfaceSelected(WanMgr_Policy_Controller_t* pWanController);
-static WcPpPolicyState_t Transition_PrimaryInterfaceDeSelected(WanMgr_Policy_Controller_t* pWanController);
-static WcPpPolicyState_t Transition_PrimaryInterfaceChanged(WanMgr_Policy_Controller_t* pWanController);
-static WcPpPolicyState_t Transition_SecondaryInterfaceSelected(WanMgr_Policy_Controller_t* pWanController);
-static WcPpPolicyState_t Transition_SecondaryInterfaceDeSelected(WanMgr_Policy_Controller_t* pWanController);
-static WcPpPolicyState_t Transition_SecondaryInterfaceUp(WanMgr_Policy_Controller_t* pWanController);
-static WcPpPolicyState_t Transition_SecondaryInterfaceDown(WanMgr_Policy_Controller_t* pWanController);
+//static WcPpPolicyState_t Transition_PrimaryInterfaceSelected(WanMgr_Policy_Controller_t* pWanController);
+//static WcPpPolicyState_t Transition_PrimaryInterfaceDeSelected(WanMgr_Policy_Controller_t* pWanController);
+//static WcPpPolicyState_t Transition_PrimaryInterfaceChanged(WanMgr_Policy_Controller_t* pWanController);
+//static WcPpPolicyState_t Transition_SecondaryInterfaceSelected(WanMgr_Policy_Controller_t* pWanController);
+//static WcPpPolicyState_t Transition_SecondaryInterfaceDeSelected(WanMgr_Policy_Controller_t* pWanController);
+//static WcPpPolicyState_t Transition_SecondaryInterfaceUp(WanMgr_Policy_Controller_t* pWanController);
+//static WcPpPolicyState_t Transition_SecondaryInterfaceDown(WanMgr_Policy_Controller_t* pWanController);
 
 
 /*********************************************************************************/
 /**************************** ACTIONS ********************************************/
 /*********************************************************************************/
+#if 0
 static void WanMgr_Policy_FM_SelectWANActive(WanMgr_Policy_Controller_t* pWanController, INT* pPrimaryInterface, INT* pSecondaryInterface)
 {
     UINT uiLoopCount;
@@ -84,31 +85,26 @@ static void WanMgr_Policy_FM_SelectWANActive(WanMgr_Policy_Controller_t* pWanCon
                 {
                     DML_WAN_IFACE* pWanIfaceData = &(pWanDmlIfaceData->data);
 
-                    if (pWanIfaceData->Wan.Enable == TRUE &&
-                       (pWanIfaceData->Phy.Status == WAN_IFACE_PHY_STATUS_UP ||
+                    if ((pWanIfaceData->Wan.Enable == TRUE) && 
+                        (pWanIfaceData->Wan.Priority >= 0) &&
+                        (pWanIfaceData->Phy.Status == WAN_IFACE_PHY_STATUS_UP ||
                         pWanIfaceData->Phy.Status == WAN_IFACE_PHY_STATUS_INITIALIZING))
                     {
-                        if(pWanIfaceData->Wan.Type == WAN_IFACE_TYPE_PRIMARY)
+                        // pWanIfaceData - is Wan-Enabled & has valid Priority & Phy status
+                        if(pWanIfaceData->Wan.Priority < iSelPrimaryPriority) 
                         {
-                            if(pWanIfaceData->Wan.Priority < iSelPrimaryPriority)
-                            {
-                                if(pWanIfaceData->Wan.Priority >= 0)
-                                {
-                                    iSelPrimaryInterface = uiLoopCount;
-                                    iSelPrimaryPriority = pWanIfaceData->Wan.Priority;
-                                }
-                            }
+                            // move Primary interface as Secondary
+                            iSelSecondaryInterface = iSelPrimaryInterface;
+                            iSelSecondaryPriority = iSelPrimaryPriority;
+                            // update Primary iface with high priority iface
+                            iSelPrimaryInterface = uiLoopCount;
+                            iSelPrimaryPriority = pWanIfaceData->Wan.Priority;
                         }
-                        else
+                        else if (pWanIfaceData->Wan.Priority < iSelSecondaryPriority)
                         {
-                            if(pWanIfaceData->Wan.Priority < iSelSecondaryPriority)
-                            {
-                                if(pWanIfaceData->Wan.Priority >= 0)
-                                {
-                                    iSelSecondaryInterface = uiLoopCount;
-                                    iSelSecondaryPriority = pWanIfaceData->Wan.Priority;
-                                }
-                            }
+                            // pWanIfaceData - has a priority greater the selected primary but lesser the secondar iface  
+                            iSelSecondaryInterface = uiLoopCount;
+                            iSelSecondaryPriority = pWanIfaceData->Wan.Priority;
                         }
                     }
 
@@ -158,7 +154,7 @@ static bool WanMgr_CheckAllIfacesDown(void)
 
     return bAllDown;
 }
-
+#endif
 /*********************************************************************************/
 /************************** TRANSITIONS ******************************************/
 /*********************************************************************************/
@@ -170,12 +166,12 @@ static WcPpPolicyState_t Transition_Start(WanMgr_Policy_Controller_t* pWanContro
         return ANSC_STATUS_FAILURE;
     }
 
-    wanmgr_sysevents_setWanState(WAN_LINK_DOWN_STATE);
+    //wanmgr_sysevents_setWanState(WAN_LINK_DOWN_STATE);
 
     CcspTraceInfo(("%s %d - State changed to STATE_INTERFACE_DOWN \n", __FUNCTION__, __LINE__));
     return STATE_INTERFACE_DOWN;
 }
-
+#if 0
 static WcPpPolicyState_t Transition_PrimaryInterfaceSelected(WanMgr_Policy_Controller_t* pWanController)
 {
     DML_WAN_IFACE* pActiveInterface = NULL;
@@ -195,6 +191,7 @@ static WcPpPolicyState_t Transition_PrimaryInterfaceSelected(WanMgr_Policy_Contr
 
         //Set ActiveLink to FALSE
         pActiveInterface->Wan.ActiveLink = FALSE;
+        pActiveInterface->SelectionStatus = WAN_IFACE_NOT_SELECTED;
     }
 
 
@@ -206,6 +203,7 @@ static WcPpPolicyState_t Transition_PrimaryInterfaceSelected(WanMgr_Policy_Contr
 
         //Set ActiveLink to TRUE
         pWanIfaceData->Wan.ActiveLink = TRUE;
+        pWanIfaceData->SelectionStatus = WAN_IFACE_ACTIVE;
 
         WanMgr_IfaceSM_Init(&wanIfCtrl, pWanIfaceData->uiIfaceIdx);
 
@@ -256,6 +254,7 @@ static WcPpPolicyState_t Transition_PrimaryInterfaceDeSelected(WanMgr_Policy_Con
 
     //Set ActiveLink to FALSE
     pActiveInterface->Wan.ActiveLink = FALSE;
+    pActiveInterface->SelectionStatus = WAN_IFACE_NOT_SELECTED;
 
 
     pWanController->activeInterfaceIdx = -1;
@@ -288,6 +287,7 @@ static WcPpPolicyState_t Transition_PrimaryInterfaceChanged(WanMgr_Policy_Contro
 
     //Set ActiveLink to FALSE
     pActiveInterface->Wan.ActiveLink = FALSE;
+    pActiveInterface->SelectionStatus = WAN_IFACE_NOT_SELECTED;
 
     pWanController->activeInterfaceIdx = -1;
 
@@ -306,6 +306,7 @@ static WcPpPolicyState_t Transition_PrimaryInterfaceChanged(WanMgr_Policy_Contro
 
             //Set ActiveLink to TRUE
             pWanIfaceData->Wan.ActiveLink = TRUE;
+            pWanIfaceData->SelectionStatus = WAN_IFACE_ACTIVE;
             WanMgr_IfaceSM_Init(&wanIfCtrl, pWanIfaceData->uiIfaceIdx);
 
             WanMgrDml_GetIfaceData_release(pWanDmlIfaceData);
@@ -338,6 +339,7 @@ static WcPpPolicyState_t Transition_SecondaryInterfaceSelected(WanMgr_Policy_Con
 
         //Set ActiveLink to FALSE
         pActiveInterface->Wan.ActiveLink = FALSE;
+        pActiveInterface->SelectionStatus = WAN_IFACE_NOT_SELECTED;
     }
 
 
@@ -354,6 +356,7 @@ static WcPpPolicyState_t Transition_SecondaryInterfaceSelected(WanMgr_Policy_Con
 
     //Set ActiveLink to TRUE
     pWanIfaceData->Wan.ActiveLink = TRUE;
+    pWanIfaceData->SelectionStatus = WAN_IFACE_ACTIVE;
     WanMgr_IfaceSM_Init(&wanIfCtrl, pWanIfaceData->uiIfaceIdx);
 
     WanMgrDml_GetIfaceData_release(pWanDmlIfaceData);
@@ -383,6 +386,7 @@ static WcPpPolicyState_t Transition_SecondaryInterfaceDeSelected(WanMgr_Policy_C
 
         //Set ActiveLink to FALSE
         pActiveInterface->Wan.ActiveLink = FALSE;
+        pActiveInterface->SelectionStatus = WAN_IFACE_NOT_SELECTED;
     }
 
     pWanController->activeInterfaceIdx = -1;
@@ -416,8 +420,7 @@ static WcPpPolicyState_t Transition_SecondaryInterfaceUp(WanMgr_Policy_Controlle
         if (pWanIfaceData->Wan.Enable == TRUE &&
             pWanIfaceData->Wan.Status == WAN_IFACE_STATUS_DISABLED &&
             pWanIfaceData->Phy.Status == WAN_IFACE_PHY_STATUS_UP &&
-            pWanIfaceData->Wan.LinkStatus == WAN_IFACE_LINKSTATUS_DOWN &&
-            pWanIfaceData->Wan.Type == WAN_IFACE_TYPE_SECONDARY)
+            pWanIfaceData->Wan.LinkStatus == WAN_IFACE_LINKSTATUS_DOWN)
         {
             WanMgr_IfaceSM_Init(&wanIfCtrl, pWanIfaceData->uiIfaceIdx);
             bSecondaryUp = true;
@@ -448,9 +451,11 @@ static WcPpPolicyState_t Transition_SecondaryInterfaceDown(WanMgr_Policy_Control
     CcspTraceInfo(("%s %d - State changed to STATE_PRIMARY_WAN_ACTIVE \n", __FUNCTION__, __LINE__));
     return STATE_PRIMARY_WAN_ACTIVE;
 }
+#endif
 /*********************************************************************************/
 /**************************** STATES *********************************************/
 /*********************************************************************************/
+#if 0
 static WcPpPolicyState_t State_WanDown(WanMgr_Policy_Controller_t* pWanController)
 {
     int selectedPrimaryInterface = -1;
@@ -511,7 +516,6 @@ static WcPpPolicyState_t State_PrimaryWanActive(WanMgr_Policy_Controller_t* pWan
 
     if( pWanController->WanEnable == FALSE ||
         pActiveInterface->Phy.Status == WAN_IFACE_PHY_STATUS_DOWN ||
-        pActiveInterface->Wan.Type != WAN_IFACE_TYPE_PRIMARY ||
         pActiveInterface->Wan.Enable == FALSE)
     {
         return Transition_PrimaryInterfaceDeSelected(pWanController);
@@ -559,7 +563,6 @@ static WcPpPolicyState_t State_SecondaryWanActive(WanMgr_Policy_Controller_t* pW
 
     if( pWanController->WanEnable == FALSE ||
         pActiveInterface->Phy.Status == WAN_IFACE_PHY_STATUS_DOWN ||
-        pActiveInterface->Wan.Type != WAN_IFACE_TYPE_SECONDARY ||
         pActiveInterface->Wan.Enable == FALSE)
     {
         return Transition_SecondaryInterfaceDeSelected(pWanController);
@@ -607,10 +610,9 @@ static WcPpPolicyState_t State_PrimaryWanActiveSecondaryWanUp(WanMgr_Policy_Cont
     pActiveInterface = &(pWanController->pWanActiveIfaceData->data);
 
     /* Phy.Status of the Active Primary Interface is DOWN, or Wan.Enable of the Active Primary Interface
-    is FALSE, or Wan.Type of the Active Primary Interface is not PRIMARY, or Global Enable is FALSE */
+    is FALSE, or Global Enable is FALSE */
     if (pWanController->WanEnable != TRUE ||
         pActiveInterface->Wan.Enable != TRUE ||
-        pActiveInterface->Wan.Type != WAN_IFACE_TYPE_PRIMARY ||
         pActiveInterface->Phy.Status == WAN_IFACE_PHY_STATUS_DOWN)
     {
         return Transition_SecondaryInterfaceSelected(pWanController);
@@ -640,7 +642,7 @@ static WcPpPolicyState_t State_PrimaryWanActiveSecondaryWanUp(WanMgr_Policy_Cont
 
     return STATE_PRIMARY_WAN_ACTIVE_SECONDARY_WAN_UP;
 }
-
+#endif
 
 /*********************************************************************************/
 /*********************************************************************************/
@@ -703,16 +705,16 @@ ANSC_STATUS WanMgr_Policy_PrimaryPriorityPolicy(void)
         switch (pp_sm_state)
         {
             case STATE_INTERFACE_DOWN:
-                pp_sm_state = State_WanDown(&WanPolicyCtrl);
+                //pp_sm_state = State_WanDown(&WanPolicyCtrl);
                 break;
             case STATE_PRIMARY_WAN_ACTIVE:
-                pp_sm_state = State_PrimaryWanActive(&WanPolicyCtrl);
+                //pp_sm_state = State_PrimaryWanActive(&WanPolicyCtrl);
                 break;
             case STATE_SECONDARY_WAN_ACTIVE:
-                pp_sm_state = State_SecondaryWanActive(&WanPolicyCtrl);
+                //pp_sm_state = State_SecondaryWanActive(&WanPolicyCtrl);
                 break;
             case STATE_PRIMARY_WAN_ACTIVE_SECONDARY_WAN_UP:
-                pp_sm_state = State_PrimaryWanActiveSecondaryWanUp(&WanPolicyCtrl);
+                //pp_sm_state = State_PrimaryWanActiveSecondaryWanUp(&WanPolicyCtrl);
                 break;
             default:
                 CcspTraceInfo(("%s %d - Case: default \n", __FUNCTION__, __LINE__));

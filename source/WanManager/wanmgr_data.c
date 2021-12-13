@@ -54,7 +54,6 @@ void WanMgr_SetConfigData_Default(DML_WANMGR_CONFIG* pWanDmlConfig)
     {
         pWanDmlConfig->Enable = TRUE;
         pWanDmlConfig->Policy = FIXED_MODE;
-        pWanDmlConfig->IdleTimeout = 0;
         pWanDmlConfig->ResetActiveInterface = FALSE;
     }
 }
@@ -139,6 +138,8 @@ WanMgr_Iface_Data_t* WanMgr_GetIfaceData_locked(UINT iface_index)
     return NULL;
 }
 
+
+#ifndef FEATURE_RDKB_WAN_MULTI_VLAN
 WanMgr_Iface_Data_t* WanMgr_GetIfaceDataByName_locked(char* iface_name)
 {
    UINT idx;
@@ -163,6 +164,7 @@ WanMgr_Iface_Data_t* WanMgr_GetIfaceDataByName_locked(char* iface_name)
 
     return NULL;
 }
+#endif
 
 void WanMgrDml_GetIfaceData_release(WanMgr_Iface_Data_t* pWanIfaceData)
 {
@@ -173,63 +175,28 @@ void WanMgrDml_GetIfaceData_release(WanMgr_Iface_Data_t* pWanIfaceData)
     }
 }
 
+#ifdef FEATURE_RDKB_WAN_MULTI_VLAN
 void WanMgr_IfaceData_Init(WanMgr_Iface_Data_t* pIfaceData, UINT iface_index)
 {
     if(pIfaceData != NULL)
     {
         DML_WAN_IFACE* pWanDmlIface = &(pIfaceData->data);
 
-        pWanDmlIface->MonitorOperStatus = FALSE;
-        pWanDmlIface->WanConfigEnabled = FALSE;
-        pWanDmlIface->CustomConfigEnable = FALSE;
-        memset(pWanDmlIface->CustomConfigPath,0,sizeof(pWanDmlIface->CustomConfigPath));
-        pWanDmlIface->Wan.OperationalStatus = WAN_OPERSTATUS_UNKNOWN;
         pWanDmlIface->uiIfaceIdx = iface_index;
         pWanDmlIface->uiInstanceNumber = iface_index+1;
         memset(pWanDmlIface->Name, 0, 64);
-        memset(pWanDmlIface->DisplayName, 0, 64);
-        memset(pWanDmlIface->Phy.Path, 0, 64);
-        pWanDmlIface->Phy.Status = WAN_IFACE_PHY_STATUS_DOWN;
-        memset(pWanDmlIface->Wan.Name, 0, 64);
-        pWanDmlIface->Wan.Enable = FALSE;
-        pWanDmlIface->Wan.Priority = -1;
-        pWanDmlIface->Wan.Type = WAN_IFACE_TYPE_UNCONFIGURED;
-        pWanDmlIface->Wan.SelectionTimeout = 0;
-        pWanDmlIface->Wan.EnableMAPT = FALSE;
-        pWanDmlIface->Wan.EnableDSLite = FALSE;
-        pWanDmlIface->Wan.EnableIPoE = FALSE;
-        pWanDmlIface->Wan.ActiveLink = FALSE;
-        pWanDmlIface->Wan.Status = WAN_IFACE_STATUS_DISABLED;
-        pWanDmlIface->Wan.LinkStatus = WAN_IFACE_LINKSTATUS_DOWN;
-        pWanDmlIface->Wan.Refresh = FALSE;
-        pWanDmlIface->Wan.RebootOnConfiguration = FALSE;
-        pWanDmlIface->Wan.Validation.DiscoverOffer = FALSE;
-        pWanDmlIface->Wan.Validation.SolicitAdvertise = FALSE;
-        pWanDmlIface->Wan.Validation.RS_RA = FALSE;
-        pWanDmlIface->Wan.Validation.PadiPado = FALSE;
-        pWanDmlIface->DynamicTrigger.Enable = FALSE;
-        pWanDmlIface->DynamicTrigger.Delay = 0;
-        memset(pWanDmlIface->IP.Path, 0, 64);
-        pWanDmlIface->IP.Ipv4Status = WAN_IFACE_IPV4_STATE_DOWN;
-        pWanDmlIface->IP.Ipv6Status = WAN_IFACE_IPV6_STATE_DOWN;
-        pWanDmlIface->IP.Ipv4Changed = FALSE;
-        pWanDmlIface->IP.Ipv6Changed = FALSE;
-        memset(&(pWanDmlIface->IP.Ipv4Data), 0, sizeof(WANMGR_IPV4_DATA));
-        memset(&(pWanDmlIface->IP.Ipv6Data), 0, sizeof(WANMGR_IPV6_DATA));
-        pWanDmlIface->IP.pIpcIpv4Data = NULL;
-        pWanDmlIface->IP.pIpcIpv6Data = NULL;
-        pWanDmlIface->MAP.MaptStatus = WAN_IFACE_MAPT_STATE_DOWN;
-        memset(pWanDmlIface->MAP.Path, 0, 64);
-        pWanDmlIface->MAP.MaptChanged = FALSE;
-        memset(pWanDmlIface->DSLite.Path, 0, 64);
-        pWanDmlIface->DSLite.Status = WAN_IFACE_DSLITE_STATE_DOWN;
-        pWanDmlIface->DSLite.Changed = FALSE;
-        pWanDmlIface->PPP.LinkStatus = WAN_IFACE_PPP_LINK_STATUS_DOWN;
-        pWanDmlIface->PPP.LCPStatus = WAN_IFACE_LCP_STATUS_DOWN;
-        pWanDmlIface->PPP.IPCPStatus = WAN_IFACE_IPCP_STATUS_DOWN;
-        pWanDmlIface->PPP.IPV6CPStatus = WAN_IFACE_IPV6CP_STATUS_DOWN;
+        memset(pWanDmlIface->BaseInterface, 0, BUFLEN_128);
+	pWanDmlIface->Status = WAN_IFACE_STATUS_DISABLED;
+	pWanDmlIface->LinkStatus = WAN_IFACE_LINKSTATUS_DOWN;
+
+        pWanDmlIface->Selection.Enable = FALSE;
+        pWanDmlIface->Selection.Status = WAN_IFACE_NOT_SELECTED;
+        pWanDmlIface->Selection.Priority = 0;
+        pWanDmlIface->Selection.TimeOut = 0;
+        pWanDmlIface->Selection.RequireReboot = FALSE;
     }
 }
+#endif
 
 /******** WAN MGR DATA FUNCTIONS ********/
 void WanMgr_Data_Init(void)

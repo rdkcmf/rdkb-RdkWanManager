@@ -1364,69 +1364,6 @@ ANSC_STATUS WanManager_getGloballyUniqueIfAddr6(const char *ifname, char *ipAddr
 }
 
 
-#ifdef FEATURE_802_1P_COS_MARKING
-
-ANSC_HANDLE WanManager_AddIfaceMarking(DML_WAN_IFACE* pWanDmlIface, ULONG* pInsNumber)
-{
-    DATAMODEL_MARKING*              pDmlMarking     = (DATAMODEL_MARKING*) &(pWanDmlIface->Marking);
-    DML_MARKING*                    p_Marking       = NULL;
-    CONTEXT_MARKING_LINK_OBJECT*    pMarkingCxtLink = NULL;
-
-    //Verify limit of the marking table
-    if( WAN_IF_MARKING_MAX_LIMIT < pDmlMarking->ulNextInstanceNumber )
-    {
-        CcspTraceError(("%s %d - Failed to add Marking entry due to maximum limit(%d)\n",__FUNCTION__,__LINE__,WAN_IF_MARKING_MAX_LIMIT));
-        return NULL;
-    }
-
-    p_Marking       = (DML_MARKING*)AnscAllocateMemory(sizeof(DML_MARKING));
-    pMarkingCxtLink = (CONTEXT_MARKING_LINK_OBJECT*)AnscAllocateMemory(sizeof(CONTEXT_MARKING_LINK_OBJECT));
-    if((p_Marking == NULL) || (pMarkingCxtLink == NULL))
-    {
-        if( NULL != pMarkingCxtLink )
-        {
-          AnscFreeMemory(pMarkingCxtLink);
-          pMarkingCxtLink = NULL;
-        }
-
-        if( NULL != p_Marking )
-        {
-          AnscFreeMemory(p_Marking);
-          p_Marking = NULL;
-        }
-        return NULL;
-    }
-
-
-    /* now we have this link content */
-    pMarkingCxtLink->hContext = (ANSC_HANDLE)p_Marking;
-    pMarkingCxtLink->bNew     = TRUE;
-
-    pMarkingCxtLink->InstanceNumber  = pDmlMarking->ulNextInstanceNumber;
-    *pInsNumber                      = pDmlMarking->ulNextInstanceNumber;
-
-    //Assign actual instance number
-    p_Marking->InstanceNumber = pDmlMarking->ulNextInstanceNumber;
-
-    pDmlMarking->ulNextInstanceNumber++;
-
-    //Assign WAN interface instance for reference
-    p_Marking->ulWANIfInstanceNumber = pWanDmlIface->uiInstanceNumber;
-
-    //Initialise all marking members
-    memset( p_Marking->Alias, 0, sizeof( p_Marking->Alias ) );
-    p_Marking->SKBPort = 0;
-    p_Marking->SKBMark = 0;
-    p_Marking->EthernetPriorityMark = -1;
-
-    SListPushMarkingEntryByInsNum(&pDmlMarking->MarkingList, (PCONTEXT_LINK_OBJECT)pMarkingCxtLink);
-
-    return (ANSC_HANDLE)pMarkingCxtLink;
-}
-
-
-#endif /* * FEATURE_802_1P_COS_MARKING */
-
 ANSC_STATUS WanManager_CreatePPPSession(DML_WAN_IFACE* pInterface)
 {
     pthread_t pppThreadId;

@@ -181,13 +181,13 @@ ANSC_STATUS BackEndManagerInitialize(ANSC_HANDLE hThisObject)
     //Wan Manager Configuration
     WanMgr_WanConfigInit();
 
-    pMyObject->hDhcpv4        = (ANSC_HANDLE)WanMgr_Dhcpv4Create();
+    //pMyObject->hDhcpv4        = (ANSC_HANDLE)WanMgr_Dhcpv4Create();
     AnscTraceWarning(("  WanMgr_Dhcpv4Create done!\n"));
 
-    pMyObject->hDhcpv6        = (ANSC_HANDLE)WanMgr_Dhcpv6Create();
+    //pMyObject->hDhcpv6        = (ANSC_HANDLE)WanMgr_Dhcpv6Create();
     AnscTraceWarning(("  WanMgr_Dhcpv6Create done!\n"));
 
-    WanMgrDmlWanWebConfigInit();
+    //WanMgrDmlWanWebConfigInit();
 
     return returnStatus;
 }
@@ -224,12 +224,12 @@ ANSC_STATUS BackEndManagerRemove(ANSC_HANDLE hThisObject)
     }
     if ( pMyObject->hDhcpv4 )
     {
-        WanMgr_Dhcpv4Remove((ANSC_HANDLE)pMyObject->hDhcpv4);
+        //WanMgr_Dhcpv4Remove((ANSC_HANDLE)pMyObject->hDhcpv4);
     }
 
     if ( pMyObject->hDhcpv6 )
     {
-        WanMgr_Dhcpv6Remove((ANSC_HANDLE)pMyObject->hDhcpv6);
+        //WanMgr_Dhcpv6Remove((ANSC_HANDLE)pMyObject->hDhcpv6);
     }
 
     /* Remove self */

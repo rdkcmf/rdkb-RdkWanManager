@@ -78,7 +78,9 @@ typedef enum
     SET_LFT = 1
 } Ipv6OperType;
 
+//ToDo: Remove Comments, While Working on Interface State Machine.
 
+#if 0
 /* ---- Global Variables -------------------------- */
 //extern int sysevent_fd;
 //extern token_t sysevent_token;
@@ -220,10 +222,8 @@ ANSC_STATUS WanManager_DeletePPPSession(DML_WAN_IFACE* pInterface);
 
 ANSC_STATUS WanManager_getGloballyUniqueIfAddr6(const char *ifname, char *ipAddr, uint32_t *prefixLen);
 
-#ifdef FEATURE_802_1P_COS_MARKING
-ANSC_HANDLE WanManager_AddIfaceMarking(DML_WAN_IFACE* pWanDmlIface, ULONG* pInsNumber);
-#endif /* * FEATURE_802_1P_COS_MARKING */
 ANSC_STATUS WanManager_CheckGivenTypeExists(INT IfIndex, UINT uiTotalIfaces, DML_WAN_IFACE_TYPE priorityType, INT priority, BOOL *Status);
 ANSC_STATUS WanManager_CheckGivenPriorityExists(INT IfIndex, UINT uiTotalIfaces, INT priority, DML_WAN_IFACE_TYPE priorityType, BOOL *Status);
 INT WanMgr_StartIpMonitor(UINT iface_index);
+#endif
 #endif // _WANMGR_NET_UTILS_H_
